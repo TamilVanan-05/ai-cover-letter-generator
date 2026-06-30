@@ -44,13 +44,19 @@ def register():
         db.session.add(new_user)
         db.session.flush() # Populate new_user.id
         
-        # Initialize an empty profile for the user
-        new_profile = Profile(
-            user_id=new_user.id,
-            full_name=username,
-            email=email
-        )
-        db.session.add(new_profile)
+        # Initialize an empty profile for the user, checking for orphaned profiles first
+        new_profile = Profile.query.filter_by(user_id=new_user.id).first()
+        if not new_profile:
+            new_profile = Profile(
+                user_id=new_user.id,
+                full_name=username,
+                email=email
+            )
+            db.session.add(new_profile)
+        else:
+            # Overwrite details on orphaned row
+            new_profile.full_name = username
+            new_profile.email = email
         
         # Log activity
         log = ActivityLog(user_id=new_user.id, action="Register", details="User registered account successfully.")
