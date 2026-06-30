@@ -1,4 +1,6 @@
 import google.generativeai as genai
+import re
+import json
 from config import Config
 
 # Configure Gemini if API key is present
@@ -6,7 +8,7 @@ if Config.GEMINI_API_KEY:
     genai.configure(api_key=Config.GEMINI_API_KEY)
 
 def generate_cover_letter(profile, job_details, writing_style):
-    """Generates cover letters using Gemini API or a smart rule-based local NLP engine fallback."""
+    """Generates cover letters (Versions A, B, and C) in a single step using Gemini API, with local fallback."""
     
     # Extract details
     full_name = profile.get('full_name', 'Applicant Name')
@@ -30,13 +32,21 @@ def generate_cover_letter(profile, job_details, writing_style):
     skills = profile.get('skills', '')
     education = profile.get('education', '')
     
-    # Prompt for Gemini
+    # Personalization guideline
+    personalization_instruction = ""
+    if company and company != "Target Company":
+        personalization_instruction = f"""
+        - For the company personalization: Generate a genuine, custom sentence of admiration tailored to '{company}' based on the job description (e.g. 'I admire your company's innovation in software delivery and commitment to building scalable systems.'). Avoid generic cliches, and integrate it naturally in the first or second paragraph of each letter version.
+        """
+
     prompt = f"""
-    You are an expert recruitment coach and ATS Optimization writer. Write a premium, highly tailored, and recruiter-approved cover letter based on the following details.
+    You are an expert recruitment coach, HR expert, and ATS writer. Write THREE (3) distinct versions of a cover letter based on the details below.
+    Each version must be optimized for applicant tracking systems (ATS), highlight the matching skills ({skills}), and map accomplishments to the job description.
     
     CANDIDATE PROFILE:
     - Name: {full_name}
-    - Location: {location}
+    - Contact: {email} | {phone} | {location}
+    - Links: {linkedin} | {portfolio}
     - Experience: {exp_years} years
     - Current Position: {current_pos}
     - Previous Position: {prev_pos}
@@ -50,20 +60,26 @@ def generate_cover_letter(profile, job_details, writing_style):
     - Company: {company}
     - Hiring Manager: {manager}
     - Location: {job_location}
-    - Description: {job_desc}
+    - Job Description: {job_desc}
     
-    WRITING STYLE SPECIFICATION:
-    - Tone: {writing_style} (Options include Professional, Executive, Corporate, Friendly, Creative, Formal, Confident, Enthusiastic, Minimal, Luxury Executive)
+    VERSION WRITING STYLES:
+    1. **Version A (Professional & Balanced)**: A polished, standard business style. Excellent formatting, metrics-oriented, and structured. Matches Tone: Professional/Corporate/Formal.
+    2. **Version B (Confident & Achiever-focused)**: A bold, high-impact style. Focuses heavily on ownership, leadership, KPIs, and driving outcomes. Matches Tone: Executive/Confident/Luxury Executive.
+    3. **Version C (Friendly & Narrative-focused)**: A warm, story-driven style. Focuses on passion, culture-fit, learning, and alignment with the company's values. Matches Tone: Friendly/Creative/Enthusiastic.
     
     CRITICAL AI REQUIREMENTS:
-    1. Read the job description and candidate details, identifying matching terms.
-    2. Start with a direct, compelling opening salutation and paragraph.
-    3. The body paragraph should map candidate's actual achievements ({achievements}) and skills ({skills}) to requirements mentioned in the job description.
-    4. Highlight concrete metrics and years of experience.
-    5. Maintain a natural, authoritative tone. Avoid buzzwords and generic sentences.
-    6. Include a Call-To-Action (CTA) in the closing paragraph.
-    7. Generate a professional sign-off with candidate's details ({full_name}, {email}, {phone}, {linkedin}, {portfolio}).
-    8. Write the complete cover letter directly. Do not include markdown labels like "Dear Hiring Manager:" at the very top of your response, just return the content naturally.
+    1. Start each letter directly with the salutation: 'Dear {manager},' or 'Dear Hiring Manager,' (do not include duplicate headers).
+    2. Include a clear Call-To-Action (CTA) in each closing paragraph.
+    3. Conclude each version with a clean professional signature block listing name ({full_name}) and contact details ({email}, {phone}, {linkedin}, {portfolio}).
+    {personalization_instruction}
+    
+    RESPONSE FORMAT:
+    You MUST return ONLY a valid JSON object. Do not wrap it in markdown code blocks like ```json ... ``` or include any comments. The JSON structure must match this:
+    {{
+        "version_a": "Full text of Version A...",
+        "version_b": "Full text of Version B...",
+        "version_c": "Full text of Version C..."
+    }}
     """
     
     if Config.GEMINI_API_KEY:
@@ -71,18 +87,33 @@ def generate_cover_letter(profile, job_details, writing_style):
             model = genai.GenerativeModel('gemini-1.5-flash')
             response = model.generate_content(prompt)
             if response and response.text:
-                return response.text.strip()
+                clean_text = response.text.strip()
+                if clean_text.startswith("```"):
+                    lines = clean_text.splitlines()
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines[-1].startswith("```"):
+                        lines = lines[:-1]
+                    clean_text = "\n".join(lines).strip()
+                
+                # Verify JSON parsing
+                parsed_json = json.loads(clean_text)
+                if "version_a" in parsed_json and "version_b" in parsed_json:
+                    return clean_text
         except Exception as e:
-            # If API fails, fall through to fallback engine
-            print(f"Gemini API generation failed: {e}. Falling back to local generator.")
+            print(f"Gemini API versions generation failed: {e}. Falling back to local generation.")
             
-    # Fallback Local Generator
-    return generate_local_fallback(profile, job_details, writing_style)
+    # Fallback Local Generator returning JSON versions
+    fallback_data = {
+        "version_a": generate_local_fallback(profile, job_details, "professional"),
+        "version_b": generate_local_fallback(profile, job_details, "confident"),
+        "version_c": generate_local_fallback(profile, job_details, "friendly")
+    }
+    return json.dumps(fallback_data)
 
 
 def generate_local_fallback(profile, job_details, writing_style):
     """Fallback generator using high-quality writing styles to compose letter elements."""
-    
     full_name = profile.get('full_name', 'Applicant Name')
     email = profile.get('email', '')
     phone = profile.get('phone', '')
@@ -98,32 +129,33 @@ def generate_local_fallback(profile, job_details, writing_style):
     prev_pos = profile.get('previous_position', '')
     industry = profile.get('industry', 'Technology')
     
-    # Process skills list
     skills_list = [s.strip() for s in profile.get('skills', '').split(',') if s.strip()]
     skills_str = ", ".join(skills_list[:4]) if skills_list else "core operations and technical execution"
     
-    # Process achievements
     ach_list = [a.strip() for a in profile.get('achievements', '').split('\n') if a.strip()]
     main_ach = ach_list[0] if ach_list else f"Successfully led key projects and delivered results in {industry}."
     
-    # Structure text by tone
     style = writing_style.lower()
     
     # 1. Salutation
     salutation = f"Dear {manager}," if manager != "Hiring Manager" else "Dear Hiring Manager,"
     
-    # 2. Openings
+    # 2. Openings & Personalized sentences
+    personal_sentence = ""
+    if company and company != "Target Company":
+        personal_sentence = f" I admire {company}'s leadership in building next-generation products and your customer-centric mission."
+        
     openings = {
-        'professional': f"I am writing to express my strong interest in the {job_title} position at {company}. With {exp_years} years of dedicated experience in {industry}, particularly as a {current_pos or 'specialist'}, I am confident in my ability to drive key initiatives and support your team's objectives.",
-        'executive': f"It is with great enthusiasm that I apply for the {job_title} leadership role at {company}. Throughout my career, including my tenure as {current_pos or 'a professional'}, I have specialized in building robust frameworks and executing growth strategies that align with corporate visions.",
-        'corporate': f"Please accept this application for the position of {job_title} with {company}. My background in {industry} operations, combined with my history of high performance as {current_pos or 'an associate'}, matches the profile of the strategic contributor you are looking for.",
-        'friendly': f"I was thrilled to see the opening for the {job_title} role at {company}! I have been following your company's milestones, and I would love to bring my {exp_years}+ years of expertise in {industry} to your vibrant team.",
-        'creative': f"Every great company needs builders who think outside the box, and that is why I was drawn to the {job_title} position at {company}. Bringing an innovative approach and {exp_years} years of hands-on expertise, I am eager to redefine what is possible for your brand.",
-        'formal': f"I am writing to formally submit my candidacy for the position of {job_title} at {company}. As a qualified professional with a strong foundation in {industry} (currently serving as {current_pos or 'a specialist'}), I present a verified record of diligence and expertise.",
-        'confident': f"If you are seeking a results-driven leader who can immediately step into the {job_title} role and deliver high-impact results for {company}, my profile matches your requirements. I have spent the last {exp_years} years optimizing systems and scaling operations.",
-        'enthusiastic': f"I am incredibly excited to apply for the {job_title} opening at {company}! My passion for {industry} and my accomplishments as {current_pos or 'a team lead'} make me uniquely suited to hit the ground running on day one.",
-        'minimal': f"I am writing to apply for the {job_title} role at {company}. Based on my {exp_years} years of experience in {industry} and my technical background, I believe I can make an immediate contribution to your team.",
-        'luxury executive': f"I am writing to propose my candidacy for the position of {job_title} at {company}. Throughout my distinguished career in the {industry} sector, I have orchestrated high-value strategies, optimized resource allocations, and consistently driven commercial excellence."
+        'professional': f"I am writing to express my strong interest in the {job_title} position at {company}. With {exp_years} years of dedicated experience in {industry}, particularly as a {current_pos or 'specialist'}, I am confident in my ability to drive key initiatives and support your team's objectives.{personal_sentence}",
+        'executive': f"It is with great enthusiasm that I apply for the {job_title} leadership role at {company}. Throughout my career, including my tenure as {current_pos or 'a professional'}, I have specialized in building robust frameworks and executing growth strategies that align with corporate visions.{personal_sentence}",
+        'corporate': f"Please accept this application for the position of {job_title} with {company}. My background in {industry} operations, combined with my history of high performance as {current_pos or 'an associate'}, matches the profile of the strategic contributor you are looking for.{personal_sentence}",
+        'friendly': f"I was thrilled to see the opening for the {job_title} role at {company}! I have been following your company's milestones,{personal_sentence.lower()} and I would love to bring my {exp_years}+ years of expertise in {industry} to your vibrant team.",
+        'creative': f"Every great company needs builders who think outside the box, and that is why I was drawn to the {job_title} position at {company}. Bringing an innovative approach and {exp_years} years of hands-on expertise, I am eager to redefine what is possible for your brand.{personal_sentence}",
+        'formal': f"I am writing to formally submit my candidacy for the position of {job_title} at {company}. As a qualified professional with a strong foundation in {industry} (currently serving as {current_pos or 'a specialist'}), I present a verified record of diligence and expertise.{personal_sentence}",
+        'confident': f"If you are seeking a results-driven leader who can immediately step into the {job_title} role and deliver high-impact results for {company}, my profile matches your requirements.{personal_sentence} I have spent the last {exp_years} years optimizing systems and scaling operations.",
+        'enthusiastic': f"I am incredibly excited to apply for the {job_title} opening at {company}! My passion for {industry} and my accomplishments as {current_pos or 'a team lead'} make me uniquely suited to hit the ground running on day one.{personal_sentence}",
+        'minimal': f"I am writing to apply for the {job_title} role at {company}. Based on my {exp_years} years of experience in {industry} and my technical background, I believe I can make an immediate contribution to your team.{personal_sentence}",
+        'luxury executive': f"I am writing to propose my candidacy for the position of {job_title} at {company}. Throughout my distinguished career in the {industry} sector, I have orchestrated high-value strategies, optimized resource allocations, and consistently driven commercial excellence.{personal_sentence}"
     }
     
     opening = openings.get(style, openings['professional'])
@@ -177,16 +209,35 @@ def generate_local_fallback(profile, job_details, writing_style):
 
 
 def improve_text(text, operation, style_tone):
-    """Handles AI text transformations: Shorten, Expand, Rewrite, Tones adjustment, and humanization."""
+    """Handles AI text transformations: Shorten, Expand, Rewrite, Tones, and premium SaaS rewriters."""
+    
+    op = operation.lower().strip()
+    
+    # Map premium commands into specific directives
+    op_instructions = {
+        "improve writing": "Improve the writing style, enhance flow, and remove passive voice.",
+        "ats optimize": "Inject recruiter-preferred action verbs, highlight measurable metrics, and optimize for ATS scanners.",
+        "humanize text": "Rewrite the text to sound highly natural, engaging, warm, and authentic, eliminating robotic phrasing.",
+        "rewrite professionally": "Adopt a highly polished, professional, and authoritative business tone.",
+        "rewrite formally": "Rewrite adopting a traditional, respectful, and formal cover letter tone.",
+        "rewrite confidently": "Adopt a highly confident tone, emphasizing ownership, accomplishments, and strong capability.",
+        "expand": "Elaborate on details, adding descriptive depth and illustrating accomplishments.",
+        "shorten": "Shorten the paragraphs to make the letter extremely concise, punchy, and clear.",
+        "simplify": "Simplify the vocabulary and sentence structure for ease of reading.",
+        "generate another version": "Rewrite this letter completely from scratch while retaining all profile details."
+    }
+    
+    directive = op_instructions.get(op, f"Apply the command '{operation}' with a '{style_tone}' tone.")
+    
     prompt = f"""
-    You are an expert editor. Perform the '{operation}' command on the following text.
-    Ensure the resulting text adopts a '{style_tone}' tone and is highly polished, professional, and readable.
-    Maintain the core message, but make the text sound more natural, recruiter-approved, and flow flawlessly.
+    You are an expert editor. Perform the following editing operation on the text provided:
+    DIRECTIVE: {directive}
+    TARGET STYLE/TONE: {style_tone}
     
     ORIGINAL TEXT:
     {text}
     
-    Generate ONLY the improved text directly. Do not add markdown labels or comments.
+    Generate ONLY the improved text directly. Do not add markdown labels, comments, or wrapping blocks.
     """
     
     if Config.GEMINI_API_KEY:
@@ -211,11 +262,11 @@ def local_text_improve(text, operation, style_tone):
     op = operation.lower()
     
     # If shortening
-    if 'shorten' in op:
+    if 'shorten' in op or 'simplify' in op:
         shortened = []
         for p in paragraphs:
-            # Keep first 2 sentences of each paragraph
             sentences = re.split(r'(?<=[.!?])\s+', p)
+            # Keep first 2 sentences
             shortened.append(" ".join(sentences[:2]))
         return "\n\n".join(shortened)
         
@@ -229,11 +280,10 @@ def local_text_improve(text, operation, style_tone):
                 expanded.append(p)
         return "\n\n".join(expanded)
         
-    # If rewriting / humanizing
-    elif 'rewrite' in op or 'humanize' in op:
+    # If rewriting / humanizing / optimizing
+    elif 'rewrite' in op or 'humanize' in op or 'ats' in op or 'improve' in op:
         rewritten = []
         for p in paragraphs:
-            # Do minor wording replacements to simulate rewrites
             p_mod = p.replace("express my strong interest", "let you know how excited I am to apply")
             p_mod = p_mod.replace("express my candidacy", "apply for the open position")
             p_mod = p_mod.replace("highly collaborative", "high-performance")
@@ -242,18 +292,13 @@ def local_text_improve(text, operation, style_tone):
         return "\n\n".join(rewritten)
         
     # For tone adjustments
-    elif 'tone' in op or 'optimize' in op:
-        # Append professional emphasis sentences matching the tone
-        if 'executive' in style_tone.lower() or 'luxury' in style_tone.lower():
+    elif 'tone' in op:
+        if 'executive' in style_tone.lower() or 'luxury' in style_tone.lower() or 'confident' in style_tone.lower():
             if len(paragraphs) > 2:
                 paragraphs[1] += f" This aligns with my commitment to high-level strategic planning and business outcome optimization."
         elif 'friendly' in style_tone.lower():
             if len(paragraphs) > 2:
                 paragraphs[1] += f" I'm really looking forward to joining your collaborative culture!"
-        elif 'grammar' in op:
-            # Simulates correction, return clean copy
-            return text
-            
         return "\n\n".join(paragraphs)
         
     return text

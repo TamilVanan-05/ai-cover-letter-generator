@@ -34,6 +34,138 @@ function showDashView(viewName) {
     }
 }
 
+// --- RESUME DRAG & DROP FILE UPLOAD HANDLERS ---
+
+// Trigger file inputs
+function triggerResumeFileSelect() {
+    document.getElementById('wizardResumeFileInput').click();
+}
+
+function triggerProfileResumeFileSelect() {
+    document.getElementById('profileResumeFileInput').click();
+}
+
+// Drag & Drop Wizard Step 1 Visual feedback
+function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('wizardResumeUploadZone').classList.add('dragging');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    document.getElementById('wizardResumeUploadZone').classList.remove('dragging');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const zone = document.getElementById('wizardResumeUploadZone');
+    zone.classList.remove('dragging');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        performResumeUpload(file, 'wizard');
+    }
+}
+
+function handleResumeFileChange(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        performResumeUpload(file, 'wizard');
+    }
+}
+
+// Drag & Drop Profile View Visual feedback
+function handleDragOverProfile(e) {
+    e.preventDefault();
+    document.getElementById('profileResumeUploadZone').classList.add('dragging');
+}
+
+function handleDragLeaveProfile(e) {
+    e.preventDefault();
+    document.getElementById('profileResumeUploadZone').classList.remove('dragging');
+}
+
+function handleDropProfile(e) {
+    e.preventDefault();
+    const zone = document.getElementById('profileResumeUploadZone');
+    zone.classList.remove('dragging');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        performResumeUpload(file, 'profile');
+    }
+}
+
+function handleProfileResumeFileChange(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        performResumeUpload(file, 'profile');
+    }
+}
+
+// Perform File Upload via API
+async function performResumeUpload(file, targetView) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const statusTextId = targetView === 'wizard' ? 'uploadStatusText' : 'profileUploadStatusText';
+    const zoneId = targetView === 'wizard' ? 'wizardResumeUploadZone' : 'profileResumeUploadZone';
+    
+    const statusLabel = document.getElementById(statusTextId);
+    const uploadZone = document.getElementById(zoneId);
+    
+    statusLabel.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Parsing resume semantics...`;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/resume/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Parsing failed');
+        }
+        
+        // Mark visual success
+        uploadZone.classList.add('success');
+        statusLabel.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Parsed: ${file.name}`;
+        showToast("Resume parsed successfully! Form fields populated.", "Resume Extractor", "success");
+        
+        // Sync profile form states
+        if (targetView === 'profile') {
+            loadUserProfileData();
+        } else {
+            // Fill Wizard inputs directly
+            const profile = data.profile;
+            document.getElementById('wizFullname').value = profile.full_name || '';
+            document.getElementById('wizEmail').value = profile.email || '';
+            document.getElementById('wizPhone').value = profile.phone || '';
+            document.getElementById('wizLocation').value = profile.location || '';
+            document.getElementById('wizLinkedin').value = profile.linkedin || '';
+            document.getElementById('wizPortfolio').value = profile.portfolio || '';
+            
+            document.getElementById('wizExperience').value = profile.experience_years || 0;
+            document.getElementById('wizCurrentPos').value = profile.current_position || '';
+            document.getElementById('wizPreviousPos').value = profile.previous_position || '';
+            document.getElementById('wizIndustry').value = profile.industry || '';
+            document.getElementById('wizSkills').value = profile.skills || '';
+            document.getElementById('wizCerts').value = profile.certifications || '';
+            document.getElementById('wizEducation').value = profile.education || '';
+            document.getElementById('wizAchievements').value = profile.achievements || '';
+        }
+        
+    } catch (err) {
+        uploadZone.classList.remove('success');
+        statusLabel.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500 mr-1"></i> Upload Failed. Try again.`;
+        showToast(err.message, "Parsing Error", "error");
+    }
+}
+
+
 // --- LOAD USER PROFILE DATA ---
 async function loadUserProfileData() {
     try {
@@ -177,7 +309,6 @@ function wizardPrev() {
 function selectWizardTone(toneName) {
     selectedWizardTone = toneName;
     document.querySelectorAll('#toneSelectorGrid button').forEach(btn => btn.classList.remove('active'));
-    // Map tone name to id selector (removing space if any, e.g. "Luxury Executive" -> "LuxuryExecutive")
     const safeId = toneName.replace(' ', '');
     const activeBtn = document.getElementById(`toneBtn-${safeId}`);
     if (activeBtn) activeBtn.classList.add('active');
@@ -226,37 +357,74 @@ async function triggerCoverLetterGeneration() {
         document.getElementById('wizardLoadingScreen').classList.add('hidden');
         document.getElementById('wizardWorkspace').classList.remove('hidden');
         
-        // Load content into editor
+        // Highlight active version tab
+        updateVersionTabsVisuals(response.active_version);
+        
+        // Load active version content into editor
         document.getElementById('workspaceEditorText').value = response.content;
         document.getElementById('workspaceToneSelector').value = response.writing_style.charAt(0).toUpperCase() + response.writing_style.slice(1);
         
         // Load live preview
         updateLetterPreviewLive();
         
-        // Render ATS chart & indicators
+        // Render ATS report
         renderAtsReport(response);
         
         // Generate Template presets selection badges
         buildTemplateSelectorBadges();
         
-        // Refresh credentials remaining bar
+        // Refresh credits remaining bar
         loadUserProfileData();
         
         showToast("Cover Letter generated successfully!", "Success", "success");
         
     } catch (err) {
         showToast(err.message, "Generation Failed", "error");
-        // Reset wizard step to step 4 so user can try again
         currentWizardStep = 4;
         updateWizardProgress();
     }
+}
+
+// --- SWITCH COVER LETTER ACTIVE VERSION ---
+async function switchActiveVersion(ver) {
+    if (!activeLetter || !activeLetter.content_versions) return;
+    
+    activeLetter.active_version = ver;
+    const activeText = activeLetter.content_versions[`version_${ver}`];
+    
+    // Update input box
+    document.getElementById('workspaceEditorText').value = activeText;
+    
+    // Sync buttons active state
+    updateVersionTabsVisuals(ver);
+    
+    // Update preview block
+    updateLetterPreviewLive();
+    
+    try {
+        // Persist version toggle to server
+        const response = await apiRequest(`/api/cover-letters/${activeLetter.id}`, 'PUT', {
+            active_version: ver
+        });
+        
+        // Re-render ATS scores for this version
+        renderAtsReport(response);
+    } catch (e) {
+        console.error("Failed to sync version switch with backend:", e);
+    }
+}
+
+function updateVersionTabsVisuals(ver) {
+    document.querySelectorAll('#versionSelectorTabs button').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById(`vBtn-${ver}`);
+    if (activeBtn) activeBtn.classList.add('active');
 }
 
 // --- DYNAMIC LIVE SHEET PREVIEW ---
 function updateLetterPreviewLive() {
     const editorVal = document.getElementById('workspaceEditorText').value;
     
-    // Render text formatting (split name and details if possible)
+    // Render text formatting
     const nameVal = document.getElementById('wizFullname').value || 'APPLICANT NAME';
     const emailVal = document.getElementById('wizEmail').value || '';
     const phoneVal = document.getElementById('wizPhone').value || '';
@@ -273,10 +441,7 @@ function updateLetterPreviewLive() {
     
     document.getElementById('previewHeaderContact').textContent = contactStr;
     
-    // Strip header parts from editor output if AI repeats it, preventing double displays
     let bodyText = editorVal;
-    
-    // Simple filter to remove repeated heading contact rows in preview body
     const salutationIndex = bodyText.search(/dear/i);
     if (salutationIndex !== -1 && salutationIndex < 150) {
         bodyText = bodyText.substring(salutationIndex);
@@ -287,6 +452,32 @@ function updateLetterPreviewLive() {
     // Update word count
     const wordCount = editorVal.trim().split(/\s+/).filter(w => w.length > 0).length;
     document.getElementById('wordCounter').textContent = `Words: ${wordCount}`;
+    
+    // Locally save editor modifications to global active object
+    if (activeLetter && activeLetter.content_versions) {
+        activeLetter.content_versions[`version_${activeLetter.active_version}`] = editorVal;
+        
+        // Debounced local saving to database
+        debouncedDatabaseSave();
+    }
+}
+
+// Debounce DB edits to prevent flooding requests
+let saveTimeout = null;
+function debouncedDatabaseSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+        if (!activeLetter) return;
+        const currentText = document.getElementById('workspaceEditorText').value;
+        try {
+            await apiRequest(`/api/cover-letters/${activeLetter.id}`, 'PUT', {
+                active_version: activeLetter.active_version,
+                content: currentText
+            });
+        } catch (e) {
+            console.error("Failed auto saving cover letter progress:", e);
+        }
+    }, 1500);
 }
 
 // --- TEMPLATES SELECTION ACCENTS ---
@@ -311,28 +502,22 @@ function buildTemplateSelectorBadges() {
 async function selectLetterTemplateStyle(tempName, element) {
     if (!activeLetter) return;
     
-    // Remove active styles from other template buttons
     document.querySelectorAll('#templatePresetBadges button').forEach(b => {
         b.className = "btn btn-xs text-xs py-1 px-2.5 rounded border border-gray-800 text-gray-400 btn-outline-glass";
     });
     
     element.className = "btn btn-xs text-xs py-1 px-2.5 rounded border btn-primary border-primary";
     
-    // Update preview class styles
     const sheet = document.getElementById('printableLetterPreview');
     sheet.className = "letter-sheet template-" + tempName;
     
-    // Handle specific structural layout modifications (e.g. creative sidebar template layout)
-    // The share.html handles this templates structural difference directly, for local preview we can do standard class toggles.
-    
     try {
-        // Save selected template name back to database CoverLetter record
-        const res = await apiRequest(`/api/cover-letters/${activeLetter.id}`, 'PUT', {
+        await apiRequest(`/api/cover-letters/${activeLetter.id}`, 'PUT', {
             template_name: tempName
         });
         activeLetter.template_name = tempName;
     } catch (e) {
-        console.error("Failed to persist selected template changes:", e);
+        console.error("Failed to persist template selection:", e);
     }
 }
 
@@ -341,7 +526,7 @@ async function runAiImprovement(opType) {
     if (!activeLetter) return;
     
     const editor = document.getElementById('workspaceEditorText');
-    const loadingMessage = `[Generating AI ${opType} review...]`;
+    const loadingMessage = `[Generating AI ${opType} revision...]`;
     editor.value = loadingMessage;
     
     try {
@@ -353,13 +538,13 @@ async function runAiImprovement(opType) {
         activeLetter = response;
         editor.value = response.content;
         
-        // Re-render components
+        // Re-render
         updateLetterPreviewLive();
         renderAtsReport(response);
-        showToast(`Refined text successfully! Applied operation: ${opType}`, "AI Optimizer", "success");
+        showToast(`Refined text successfully! Applied: ${opType}`, "AI Editor", "success");
     } catch (err) {
         showToast(err.message, "AI Improvement Error", "error");
-        editor.value = activeLetter.content; // revert
+        editor.value = activeLetter.content_versions[`version_${activeLetter.active_version}`]; // revert
     }
 }
 
@@ -367,6 +552,14 @@ async function changeWorkspaceTone() {
     const toneVal = document.getElementById('workspaceToneSelector').value;
     selectedWizardTone = toneVal;
     runAiImprovement(`Change Tone to ${toneVal}`);
+}
+
+// Copy the Personalized hook to clipboard
+function copyPersonalizedHook() {
+    const hook = document.getElementById('personalizationHooksText').textContent.replace(/"/g, '').trim();
+    navigator.clipboard.writeText(hook).then(() => {
+        showToast("Admiration sentence copied! Paste it into your letter.", "Hook Copied", "success");
+    });
 }
 
 // --- SAVED COVER LETTERS PORTFOLIO FOLDER ---
@@ -415,7 +608,6 @@ function renderSavedLettersList(list) {
         const col = document.createElement('div');
         col.className = "col-md-6 col-lg-4";
         
-        // Favorite color accent
         const favClass = letter.is_favorite ? 'fa-solid text-pink-500' : 'fa-regular text-gray-500';
         
         col.innerHTML = `
@@ -451,7 +643,7 @@ function renderSavedLettersList(list) {
     });
 }
 
-// Actions from saved letter folders
+// Favorite toggle
 async function toggleFavoriteLetter(id, element) {
     try {
         const res = await apiRequest(`/api/cover-letters/${id}/favorite`, 'POST');
@@ -464,6 +656,11 @@ async function toggleFavoriteLetter(id, element) {
             icon.className = "fa-regular fa-heart text-sm text-gray-500";
             showToast("Removed from Favorites", "Favorites", "success");
         }
+        
+        // Refresh lists local cache
+        const index = savedLettersList.findIndex(x => x.id === id);
+        if (index !== -1) savedLettersList[index].is_favorite = res.is_favorite;
+        
     } catch (e) {
         showToast(e.message, "Favorite Error", "error");
     }
@@ -471,7 +668,7 @@ async function toggleFavoriteLetter(id, element) {
 
 async function duplicateSavedLetter(id) {
     try {
-        const res = await apiRequest(`/api/cover-letters/${id}/duplicate`, 'POST');
+        await apiRequest(`/api/cover-letters/${id}/duplicate`, 'POST');
         showToast("Letter duplicated successfully!", "Duplicated", "success");
         loadSavedLetters();
     } catch (e) {
@@ -497,7 +694,6 @@ async function editSavedLetter(id) {
         activeLetter = letter;
         
         // Populate Wizard inputs for steps 1-3 to support live preview calculations
-        document.getElementById('wizFullname').value = letter.job_title; // mock sync
         document.getElementById('wizJobtitle').value = letter.job_title;
         document.getElementById('wizCompany').value = letter.company_name;
         document.getElementById('wizManager').value = letter.hiring_manager;
@@ -505,7 +701,7 @@ async function editSavedLetter(id) {
         document.getElementById('wizJobLoc').value = letter.job_location;
         document.getElementById('wizSalary').value = letter.salary;
         
-        // Sync profile details if exists
+        // Sync profile details
         const profile = await apiRequest('/api/auth/profile', 'GET');
         document.getElementById('wizFullname').value = profile.full_name || '';
         document.getElementById('wizEmail').value = profile.email || '';
@@ -523,6 +719,9 @@ async function editSavedLetter(id) {
         document.getElementById('workspaceEditorText').value = letter.content;
         document.getElementById('workspaceToneSelector').value = letter.writing_style.charAt(0).toUpperCase() + letter.writing_style.slice(1);
         
+        // Synchronize active version tabs classes
+        updateVersionTabsVisuals(letter.active_version || 'a');
+        
         // Render previews
         updateLetterPreviewLive();
         renderAtsReport(letter);
@@ -533,7 +732,7 @@ async function editSavedLetter(id) {
     }
 }
 
-// Search and filters
+// Search and complex filters/sorting
 function searchSavedLetters() {
     const query = document.getElementById('lettersSearchInput').value.toLowerCase();
     const filtered = savedLettersList.filter(l => 
@@ -545,13 +744,24 @@ function searchSavedLetters() {
 }
 
 function filterSavedLetters() {
-    const val = document.getElementById('lettersFilterSelect').value;
-    if (val === 'favorites') {
-        const filtered = savedLettersList.filter(l => l.is_favorite);
-        renderSavedLettersList(filtered);
-    } else {
-        renderSavedLettersList(savedLettersList);
+    const filterVal = document.getElementById('lettersFilterSelect').value;
+    let listCopy = [...savedLettersList];
+    
+    // 1. Filtering
+    if (filterVal === 'favorites') {
+        listCopy = listCopy.filter(l => l.is_favorite);
     }
+    
+    // 2. Sorting
+    if (filterVal === 'title') {
+        listCopy.sort((x, y) => x.title.localeCompare(y.title));
+    } else if (filterVal === 'company') {
+        listCopy.sort((x, y) => x.company_name.localeCompare(y.company_name));
+    } else if (filterVal === 'score') {
+        listCopy.sort((x, y) => y.ats_score - x.ats_score); // Descending match
+    }
+    
+    renderSavedLettersList(listCopy);
 }
 
 // --- LOGTIMELINE VIEWER ---
@@ -562,8 +772,7 @@ async function loadHistoryLogs() {
     tbody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying audit trails...</td></tr>`;
     
     try {
-        const response = await apiRequest('/api/admin/activities', 'GET'); // Admin acts or user acts. We can fetch public client logs or mock them.
-        // Wait, standard users can view history logs in history view. Let's list general logs.
+        const response = await apiRequest('/api/admin/activities', 'GET');
         if (response.length === 0) {
             tbody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500 py-4">No logged history actions found.</td></tr>`;
             return;
@@ -617,10 +826,6 @@ async function refillCreditsDev() {
 
 async function upgradeTierSimulate() {
     try {
-        // Upgrade user status simulation
-        // Normally we edit user status. For sandbox, we fetch user and patch
-        const res = await apiRequest('/api/auth/profile', 'GET');
-        // Let's call refilling but mock upgrade in storage
         const user = JSON.parse(localStorage.getItem('user'));
         user.subscription_status = 'Premium Pro';
         user.credits = 999;
@@ -635,7 +840,6 @@ async function upgradeTierSimulate() {
 
 async function resetAccountDev() {
     if (!confirm("Reset database settings? This will clear all data and reset sandbox entries.")) return;
-    // Clear and reload
     localStorage.clear();
     showToast("Sandbox database cleared. Logging out...", "Sandbox Reset", "warning");
     setTimeout(() => window.location.href = '/', 1500);
@@ -643,7 +847,6 @@ async function resetAccountDev() {
 
 // Init dashboard views
 document.addEventListener("DOMContentLoaded", () => {
-    // If token exists, load data, otherwise redirect to landing
     if (!localStorage.getItem('token')) {
         window.location.href = '/login';
     } else {

@@ -35,6 +35,25 @@
     .dashboard-container {
         min-height: calc(100vh - 80px);
     }
+    
+    /* Interactive Tab Controls for ATS Report */
+    .ats-tab-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-bottom: 2px solid transparent;
+        transition: var(--transition-fast);
+    }
+    .ats-tab-btn:hover {
+        color: white;
+    }
+    .ats-tab-btn.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+    }
 </style>
 {% endblock %}
 
@@ -135,9 +154,23 @@
                 <!-- Wizard Form Cards -->
                 <div class="glass-panel p-6">
                     
-                    <!-- STEP 1: PERSONAL INFORMATION -->
+                    <!-- STEP 1: PERSONAL INFORMATION & RESUME UPLOAD -->
                     <div class="wizard-step-section" id="wizardStep-1">
-                        <h4 class="text-lg font-bold mb-4"><i class="fa-solid fa-address-card text-indigoGlow mr-2"></i> Step 1: Personal Details</h4>
+                        <h4 class="text-lg font-bold mb-3"><i class="fa-solid fa-address-card text-indigoGlow mr-2"></i> Step 1: Personal Details</h4>
+                        
+                        <!-- Premium Resume Upload Area -->
+                        <div class="mb-4">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2 block">Upload Resume to Autofill (Optional)</label>
+                            <div class="upload-zone" id="wizardResumeUploadZone" onclick="triggerResumeFileSelect()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                                <i class="fa-solid fa-file-pdf text-3xl text-indigoGlow mb-2 block"></i>
+                                <span class="text-sm font-bold text-white block" id="uploadStatusText">Drag &amp; Drop Resume here or click to browse</span>
+                                <span class="text-xs text-gray-500 mt-1 block">Supports PDF and DOCX formats (Max 5MB)</span>
+                                <input type="file" id="wizardResumeFileInput" class="hidden" accept=".pdf,.docx" onchange="handleResumeFileChange(event)">
+                            </div>
+                        </div>
+
+                        <hr class="border-gray-800 my-4">
+
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Full Name</label>
@@ -266,11 +299,19 @@
                     
                     <!-- STEP 5: AI GENERATION LOADING & EDITING WORKSPACE -->
                     <div class="wizard-step-section hidden" id="wizardStep-5">
-                        <!-- 5a. LOADING SCREEN -->
+                        <!-- 5a. LOADING SCREEN (with skeleton elements) -->
                         <div id="wizardLoadingScreen" class="text-center py-16">
                             <div class="spinner-border text-indigoGlow mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
                             <h4 class="text-xl font-bold">Synthesizing Job Elements...</h4>
                             <p class="text-sm text-gray-400 max-w-sm mx-auto mt-2">Our AI is parsing keywords and comparing achievements to write a tailored recruiter-approved cover letter.</p>
+                            
+                            <div class="max-w-xl mx-auto mt-8 p-4 glass-panel flex flex-col gap-3">
+                                <div class="skeleton skeleton-title"></div>
+                                <div class="skeleton skeleton-text" style="width: 90%;"></div>
+                                <div class="skeleton skeleton-text" style="width: 95%;"></div>
+                                <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                                <div class="skeleton skeleton-text" style="width: 85%;"></div>
+                            </div>
                         </div>
                         
                         <!-- 5b. RICH INTERACTIVE EDITING WORKSPACE -->
@@ -279,26 +320,44 @@
                                 
                                 <!-- Editor Sidebar Tools & Manual Box -->
                                 <div class="col-lg-5">
+                                    
+                                    <!-- Multi-Version Switching Tabs -->
+                                    <div class="version-tabs-container mb-3" id="versionSelectorTabs">
+                                        <button class="version-tab-btn active" onclick="switchActiveVersion('a')" id="vBtn-a">
+                                            <i class="fa-solid fa-file-contract mr-1"></i> Version A (Professional)
+                                        </button>
+                                        <button class="version-tab-btn" onclick="switchActiveVersion('b')" id="vBtn-b">
+                                            <i class="fa-solid fa-trophy mr-1"></i> Version B (Confident)
+                                        </button>
+                                        <button class="version-tab-btn" onclick="switchActiveVersion('c')" id="vBtn-c">
+                                            <i class="fa-solid fa-heart mr-1"></i> Version C (Friendly)
+                                        </button>
+                                    </div>
+
                                     <div class="flex justify-between items-center mb-3">
                                         <h5 class="font-bold text-sm">Cover Letter Editor</h5>
                                         <span class="text-xs text-gray-500 font-mono" id="wordCounter">Words: 0</span>
                                     </div>
                                     <textarea id="workspaceEditorText" rows="20" class="form-control form-glass-input text-xs font-mono mb-4 w-full" oninput="updateLetterPreviewLive()"></textarea>
                                     
-                                    <!-- AI Modifier Buttons -->
+                                    <!-- AI Modifier Buttons (expanded 10 tools) -->
                                     <div class="glass-panel p-4 mb-4">
-                                        <h6 class="font-bold text-xs uppercase tracking-wider text-gray-400 mb-3"><i class="fa-solid fa-wand-magic mr-1 text-pink-500"></i> AI Improvements</h6>
-                                        <div class="flex flex-wrap gap-2">
-                                            <button onclick="runAiImprovement('Improve Writing')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Improve</button>
-                                            <button onclick="runAiImprovement('Shorten')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Shorten</button>
-                                            <button onclick="runAiImprovement('Expand')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Expand</button>
-                                            <button onclick="runAiImprovement('Rewrite')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Rewrite</button>
-                                            <button onclick="runAiImprovement('Grammar Fix')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Grammar Fix</button>
-                                            <button onclick="runAiImprovement('Humanize')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Humanize</button>
+                                        <h6 class="font-bold text-xs uppercase tracking-wider text-gray-400 mb-3"><i class="fa-solid fa-wand-magic mr-1 text-pink-500"></i> Premium AI Rewrite Tools</h6>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <button onclick="runAiImprovement('Improve Writing')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Improve Writing</button>
+                                            <button onclick="runAiImprovement('ATS Optimize')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">ATS Optimize</button>
+                                            <button onclick="runAiImprovement('Humanize Text')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Humanize Text</button>
+                                            <button onclick="runAiImprovement('Rewrite Professionally')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Professionally</button>
+                                            <button onclick="runAiImprovement('Rewrite Formally')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Formally</button>
+                                            <button onclick="runAiImprovement('Rewrite Confidently')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Confidently</button>
+                                            <button onclick="runAiImprovement('Expand')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Expand</button>
+                                            <button onclick="runAiImprovement('Shorten')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Shorten</button>
+                                            <button onclick="runAiImprovement('Simplify')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Simplify</button>
+                                            <button onclick="runAiImprovement('Generate Another Version')" class="btn btn-outline-glass btn-xs text-[11px] py-1.5 px-2 hover:bg-indigo-500/10">Regenerate New</button>
                                         </div>
                                         <hr class="border-gray-800 my-3">
                                         <div class="flex items-center justify-between gap-2">
-                                            <label class="text-[11px] text-gray-400">Change Tone:</label>
+                                            <label class="text-[11px] text-gray-400">Change Tone Accent:</label>
                                             <select id="workspaceToneSelector" class="form-control form-glass-input text-[11px] py-1 px-2 w-auto" onchange="changeWorkspaceTone()">
                                                 <option value="Professional">Professional</option>
                                                 <option value="Executive">Executive</option>
@@ -328,7 +387,7 @@
                                 </div>
                                 
                                 <!-- Letter Preview Panel styled in dynamic templates -->
-                                <div class="col-lg-7">
+                                <div class="col-lg-7 col-md-12">
                                     
                                     <!-- Template Quick Badge Selectors -->
                                     <div class="mb-3">
@@ -351,46 +410,187 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Real-time ATS Dashboard -->
+                                    <!-- Real-time ATS Dashboard & Analytical Tabs -->
                                     <div class="glass-panel p-4 mt-6">
-                                        <h5 class="font-bold text-sm mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-gauge-high mr-2 text-indigo-400"></i> ATS Engine compliance Report</h5>
-                                        <div class="row align-items-center">
-                                            <div class="col-md-4 text-center">
-                                                <div class="score-circle mx-auto mb-2" id="atsScoreCircle">
-                                                    <span class="score-value" id="atsScoreVal">85</span>
+                                        
+                                        <!-- Interactive Report Tabs Navigation -->
+                                        <div class="flex border-b border-gray-800 mb-3 justify-start gap-1 overflow-x-auto" id="atsReportTabs">
+                                            <button onclick="switchAtsReportTab('ats-scores')" id="tabBtn-ats-scores" class="ats-tab-btn active"><i class="fa-solid fa-gauge-high mr-1"></i> ATS Dashboard</button>
+                                            <button onclick="switchAtsReportTab('skill-gap')" id="tabBtn-skill-gap" class="ats-tab-btn"><i class="fa-solid fa-arrows-split-up-and-left mr-1"></i> Skill Gap</button>
+                                            <button onclick="switchAtsReportTab('recruiter-feedback')" id="tabBtn-recruiter-feedback" class="ats-tab-btn"><i class="fa-solid fa-user-check mr-1"></i> Recruiter Feedback</button>
+                                            <button onclick="switchAtsReportTab('smart-tips')" id="tabBtn-smart-tips" class="ats-tab-btn"><i class="fa-solid fa-lightbulb mr-1"></i> Smart Tips</button>
+                                            <button onclick="switchAtsReportTab('personalization')" id="tabBtn-personalization" class="ats-tab-btn"><i class="fa-solid fa-heart mr-1"></i> Personalization</button>
+                                        </div>
+
+                                        <!-- TAB 1: ATS METRICS DASHBOARD -->
+                                        <div id="atsTab-ats-scores" class="ats-tab-content">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-4 text-center">
+                                                    <div class="score-circle mx-auto mb-2" id="atsScoreCircle">
+                                                        <span class="score-value" id="atsScoreVal">85</span>
+                                                    </div>
+                                                    <span class="text-xs text-gray-400 font-bold uppercase">Overall ATS Match</span>
                                                 </div>
-                                                <span class="text-xs text-gray-400 font-bold uppercase">ATS score Match</span>
+                                                <div class="col-md-8">
+                                                    <div class="flex flex-col gap-2">
+                                                        <!-- Horizontal Progress Indicators for SaaS metrics -->
+                                                        <div>
+                                                            <div class="flex justify-between text-[11px] mb-1">
+                                                                <span>Keyword Match Score:</span>
+                                                                <strong id="atsMetricKeywordVal">80%</strong>
+                                                            </div>
+                                                            <div class="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                                                                <div class="bg-indigo-500 h-full" id="atsMetricKeywordBar" style="width: 80%"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="flex justify-between text-[11px] mb-1">
+                                                                <span>Grammar &amp; Syntax:</span>
+                                                                <strong id="atsMetricGrammarVal">90%</strong>
+                                                            </div>
+                                                            <div class="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                                                                <div class="bg-emerald-500 h-full" id="atsMetricGrammarBar" style="width: 90%"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="flex justify-between text-[11px] mb-1">
+                                                                <span>Readability Index:</span>
+                                                                <strong id="atsMetricReadabilityVal">85%</strong>
+                                                            </div>
+                                                            <div class="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                                                                <div class="bg-sky-500 h-full" id="atsMetricReadabilityBar" style="width: 85%"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="flex justify-between text-[11px] mb-1">
+                                                                <span>Action Verbs Score:</span>
+                                                                <strong id="atsMetricVerbsVal">75%</strong>
+                                                            </div>
+                                                            <div class="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                                                                <div class="bg-purple-500 h-full" id="atsMetricVerbsBar" style="width: 75%"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="flex justify-between text-[11px] mb-1">
+                                                                <span>Formatting &amp; Header:</span>
+                                                                <strong id="atsMetricFormattingVal">100%</strong>
+                                                            </div>
+                                                            <div class="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                                                                <div class="bg-pink-500 h-full" id="atsMetricFormattingBar" style="width: 100%"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-md-8">
-                                                <div class="flex flex-col gap-3">
-                                                    <div class="flex justify-between items-center text-xs">
-                                                        <span>Readability Index:</span>
-                                                        <strong class="text-indigo-400" id="atsReadabilityVal">80 / 100</strong>
+                                            <hr class="border-gray-800 my-3">
+                                            
+                                            <!-- Length & Grammar Checklist -->
+                                            <div class="row g-2 text-xs">
+                                                <div class="col-md-6 border-r border-gray-800 pr-3">
+                                                    <div class="font-bold text-gray-400 mb-1"><i class="fa-solid fa-text-width text-indigoGlow mr-1"></i> Length Analysis</div>
+                                                    <p class="text-gray-300 leading-relaxed text-[11px]" id="atsMetricLengthAnalysis">Word count is in the ideal range.</p>
+                                                </div>
+                                                <div class="col-md-6 pl-3">
+                                                    <div class="font-bold text-gray-400 mb-1"><i class="fa-solid fa-spell-check text-emerald-400 mr-1"></i> Grammar Quality Alert</div>
+                                                    <p class="text-gray-300 leading-relaxed text-[11px]" id="atsMetricGrammarStatus">Excellent grammar. (0 syntax mistakes found)</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- TAB 2: RESUME VS JD SKILL GAP -->
+                                        <div id="atsTab-skill-gap" class="ats-tab-content hidden">
+                                            <div class="p-3 bg-slate-900/60 rounded border border-white/5 mb-3 text-xs">
+                                                <strong class="text-white block mb-1">Skill Alignment Summary:</strong>
+                                                <span class="text-gray-300" id="atsSkillGapSummary">Comparing uploaded credentials with required job descriptions...</span>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4 border-r border-gray-800 pr-3">
+                                                    <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Matching Skills (%)</h6>
+                                                    <div class="flex flex-wrap gap-1" id="atsTabKeywordsMatched"></div>
+                                                </div>
+                                                <div class="col-md-4 border-r border-gray-800 px-3">
+                                                    <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Missing Skills</h6>
+                                                    <div class="flex flex-wrap gap-1" id="atsTabMissingSkills"></div>
+                                                </div>
+                                                <div class="col-md-4 pl-3">
+                                                    <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Recommended Skills</h6>
+                                                    <div class="flex flex-wrap gap-1" id="atsTabRecommendedSkills"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- TAB 3: RECRUITER SUGGESTIONS -->
+                                        <div id="atsTab-recruiter-feedback" class="ats-tab-content hidden">
+                                            <div class="flex flex-col gap-3 text-xs">
+                                                <div>
+                                                    <strong class="text-rose-400 block mb-1"><i class="fa-solid fa-circle-xmark mr-1"></i> Weak Cover Letter Sentences:</strong>
+                                                    <ul class="list-disc pl-4 text-gray-300 d-grid gap-1.5" id="atsRecruiterWeak">
+                                                        <!-- Loaded dynamically -->
+                                                    </ul>
+                                                </div>
+                                                <div>
+                                                    <strong class="text-emerald-400 block mb-1"><i class="fa-solid fa-circle-check mr-1"></i> Strong Metrics-Driven Alternatives:</strong>
+                                                    <ul class="list-disc pl-4 text-gray-200 d-grid gap-1.5" id="atsRecruiterStrong">
+                                                        <!-- Loaded dynamically -->
+                                                    </ul>
+                                                </div>
+                                                <div class="p-2 bg-yellow-500/5 border border-yellow-500/10 rounded">
+                                                    <strong class="text-amber-400 block mb-1">Missing Metrics Check:</strong>
+                                                    <span class="text-gray-300" id="atsRecruiterMetrics">No metrics found. Try to inject values (e.g. 'reduced latency by 20%')</span>
+                                                </div>
+                                                <div class="p-2 bg-indigo-500/5 border border-indigo-500/10 rounded">
+                                                    <strong class="text-indigo-400 block mb-1">Optimized Closing Paragraph Advice:</strong>
+                                                    <span class="text-gray-300 italic font-serif" id="atsRecruiterClosing">Your closing paragraph is ready.</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- TAB 4: SMART SUGGESTIONS -->
+                                        <div id="atsTab-smart-tips" class="ats-tab-content hidden">
+                                            <div class="row g-3 text-xs">
+                                                <div class="col-md-6 border-r border-gray-800 pr-3 flex flex-col gap-3">
+                                                    <div>
+                                                        <strong class="text-indigo-400 block mb-1"><i class="fa-solid fa-certificate mr-1"></i> Recommended Certifications:</strong>
+                                                        <div class="flex flex-wrap gap-1 mt-1" id="atsSmartCerts"></div>
                                                     </div>
-                                                    <div class="flex justify-between items-center text-xs">
-                                                        <span>Present Action Verbs:</span>
-                                                        <strong class="text-indigo-400" id="atsVerbsCount">4 verbs</strong>
+                                                    <div>
+                                                        <strong class="text-pink-400 block mb-1"><i class="fa-solid fa-code mr-1"></i> Suggested Tech Skills:</strong>
+                                                        <div class="flex flex-wrap gap-1 mt-1" id="atsSmartTech"></div>
                                                     </div>
-                                                    <div class="flex justify-between items-center text-xs">
-                                                        <span>Grammar Alignment:</span>
-                                                        <strong class="text-emerald-400" id="atsGrammarVal">Excellent</strong>
+                                                    <div>
+                                                        <strong class="text-amber-400 block mb-1"><i class="fa-solid fa-users-gear mr-1"></i> Suggested Soft Skills:</strong>
+                                                        <div class="flex flex-wrap gap-1 mt-1" id="atsSmartSoft"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6 pl-3 flex flex-col gap-3">
+                                                    <div>
+                                                        <strong class="text-emerald-400 block mb-1"><i class="fa-solid fa-diagram-project mr-1"></i> Suggested Portfolio Projects:</strong>
+                                                        <ul class="list-disc pl-4 text-gray-300 d-grid gap-1" id="atsSmartProjects"></ul>
+                                                    </div>
+                                                    <div class="p-2.5 rounded bg-slate-900 border border-gray-800">
+                                                        <strong class="text-white block mb-1"><i class="fa-solid fa-arrow-trend-up text-pink-500 mr-1"></i> Career Tip:</strong>
+                                                        <p class="text-gray-400 mb-0 leading-relaxed" id="atsSmartCareerTip">Tailor achievements to reflect operational latency decreases and resource optimization.</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <hr class="border-gray-800 my-3">
-                                        <div class="row">
-                                            <div class="col-md-6 border-r border-gray-800 pr-3">
-                                                <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Matched Keywords</h6>
-                                                <div class="flex flex-wrap gap-1" id="atsKeywordsMatched"></div>
-                                            </div>
-                                            <div class="col-md-6 pl-3">
-                                                <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Missing Terms</h6>
-                                                <div class="flex flex-wrap gap-1" id="atsMissingSkills"></div>
+
+                                        <!-- TAB 5: COMPANY PERSONALIZATION HOOKS -->
+                                        <div id="atsTab-personalization" class="ats-tab-content hidden">
+                                            <div class="text-xs">
+                                                <strong class="text-indigo-400 block mb-2"><i class="fa-solid fa-hands-clapping mr-1"></i> Natural Admiration Hooks:</strong>
+                                                <p class="text-gray-300 mb-3 leading-relaxed">
+                                                    If a company name was entered, the system auto-injects natural sentences praising their achievements. Copy or check these personalized hooks below:
+                                                </p>
+                                                <div class="p-3 bg-slate-900 rounded border border-indigo-500/20 font-serif italic text-gray-200" id="personalizationHooksText">
+                                                    "I admire your company's commitment to building next-generation SaaS infrastructures and scaling operations cross-functionally."
+                                                </div>
+                                                <button onclick="copyPersonalizedHook()" class="btn btn-outline-glass btn-xs text-[10px] mt-2 py-1 px-2.5 flex items-center gap-1.5"><i class="fa-solid fa-copy"></i> Copy Hook</button>
                                             </div>
                                         </div>
+
                                         <div class="mt-3 p-3 bg-indigo-500/5 rounded border border-indigo-500/10">
-                                            <h6 class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2">Improvement Tips</h6>
+                                            <h6 class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2">General Optimization Guidelines</h6>
                                             <ul class="text-xs text-gray-300 list-disc pl-4 d-grid gap-1" id="atsSuggestionsList"></ul>
                                         </div>
                                     </div>
@@ -424,6 +624,9 @@
                         <select id="lettersFilterSelect" onchange="filterSavedLetters()" class="form-control form-glass-input text-xs py-2 w-auto">
                             <option value="all">All Letters</option>
                             <option value="favorites">Favorites Only</option>
+                            <option value="title">Sort by Title</option>
+                            <option value="company">Sort by Company</option>
+                            <option value="score">Sort by ATS Match</option>
                         </select>
                     </div>
                 </div>
@@ -465,13 +668,24 @@
                 </div>
             </section>
             
-            <!-- VIEW 4: PROFILE SETUP -->
+            <!-- VIEW 4: PROFILE SETUP (with resume upload zone) -->
             <section id="view-profile" class="dash-view hidden">
                 <div class="mb-6">
                     <h2 class="text-2xl font-extrabold">Profile Setup</h2>
                     <p class="text-sm text-gray-400">Enter your core credentials to auto-populate wizard entries when generating letters.</p>
                 </div>
                 
+                <div class="glass-panel p-6 mb-6">
+                    <h4 class="text-lg font-bold mb-3"><i class="fa-solid fa-cloud-arrow-up mr-2 text-indigoGlow"></i> Parse Resume</h4>
+                    <p class="text-xs text-gray-400 mb-4">Upload your PDF/DOCX resume. The system will automatically parse and overwrite form inputs.</p>
+                    <div class="upload-zone" id="profileResumeUploadZone" onclick="triggerProfileResumeFileSelect()" ondragover="handleDragOverProfile(event)" ondragleave="handleDragLeaveProfile(event)" ondrop="handleDropProfile(event)">
+                        <i class="fa-solid fa-file-arrow-up text-3xl text-emerald-400 mb-2 block"></i>
+                        <span class="text-sm font-bold text-white block" id="profileUploadStatusText">Drag &amp; Drop Resume here or click to browse</span>
+                        <span class="text-xs text-gray-500 mt-1 block">Supports PDF and DOCX formats (Max 5MB)</span>
+                        <input type="file" id="profileResumeFileInput" class="hidden" accept=".pdf,.docx" onchange="handleProfileResumeFileChange(event)">
+                    </div>
+                </div>
+
                 <form onsubmit="saveUserProfile(event)" class="glass-panel p-6 flex flex-col gap-6">
                     <h4 class="text-lg font-bold"><i class="fa-solid fa-address-book mr-2 text-indigoGlow"></i> Credentials Summary</h4>
                     <div class="row g-4">

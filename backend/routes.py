@@ -5,6 +5,8 @@ from backend.ai_engine import generate_cover_letter, improve_text
 from backend.ats_engine import analyze_ats
 from backend.export_engine import create_docx_file, send_cover_letter_email
 import json
+import os
+from werkzeug.utils import secure_filename
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -44,11 +46,108 @@ def public_share_page(token):
     user = User.query.get(letter.user_id)
     profile = Profile.query.filter_by(user_id=user.id).first()
     
-    # Render a clean, standalone cover letter preview styled according to the template
-    return render_template('share.html', letter=letter, profile=profile)
+    # Render active text content styled according to the template
+    content_text = letter.content
+    try:
+        content_json = json.loads(letter.content)
+        sel = content_json.get('selected', 'a')
+        content_text = content_json.get(f'version_{sel}', letter.content)
+    except Exception:
+        pass
+        
+    # We pass the unpacked text content to the public viewer template
+    class MockLetter:
+        def __init__(self, orig_letter, active_text):
+            self.id = orig_letter.id
+            self.title = orig_letter.title
+            self.template_name = orig_letter.template_name
+            self.writing_style = orig_letter.writing_style
+            self.job_title = orig_letter.job_title
+            self.company_name = orig_letter.company_name
+            self.hiring_manager = orig_letter.hiring_manager
+            self.content = active_text
+            
+    mock_letter = MockLetter(letter, content_text)
+    
+    return render_template('share.html', letter=mock_letter, profile=profile)
 
 
 # --- REST API ENDPOINTS ---
+
+@routes_bp.route('/api/resume/upload', methods=['POST'])
+@jwt_required()
+def api_upload_resume():
+    """Endpoint to upload a PDF/DOCX resume, parse candidate details, and save to profile."""
+    user_id = get_jwt_identity()
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No resume file uploaded.'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file.'}), 400
+        
+    filename = secure_filename(file.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ['.pdf', '.docx']:
+        return jsonify({'error': 'Unsupported file format. Please upload a PDF or DOCX file.'}), 400
+        
+    # Set up safe workspace uploads folder
+    upload_dir = os.path.join(os.getcwd(), 'uploads')
+    os.makedirs(upload_dir, exist_ok=True)
+    temp_path = os.path.join(upload_dir, f"resume_{user_id}{ext}")
+    
+    try:
+        file.save(temp_path)
+        
+        # Call the parser utility
+        from backend.resume_parser import parse_resume_file
+        profile_data = parse_resume_file(temp_path, ext)
+        
+        # Clean up temp file immediately
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            
+        # Get or create user profile
+        db_profile = Profile.query.filter_by(user_id=int(user_id)).first()
+        if not db_profile:
+            db_profile = Profile(user_id=int(user_id))
+            db.session.add(db_profile)
+            
+        # Merge parsed details
+        db_profile.full_name = profile_data.get('full_name') or db_profile.full_name
+        db_profile.email = profile_data.get('email') or db_profile.email
+        db_profile.phone = profile_data.get('phone') or db_profile.phone
+        db_profile.location = profile_data.get('location') or db_profile.location
+        db_profile.linkedin = profile_data.get('linkedin') or db_profile.linkedin
+        db_profile.portfolio = profile_data.get('portfolio') or db_profile.portfolio
+        
+        db_profile.experience_years = int(profile_data.get('experience_years') or db_profile.experience_years or 0)
+        db_profile.current_position = profile_data.get('current_position') or db_profile.current_position
+        db_profile.previous_position = profile_data.get('previous_position') or db_profile.previous_position
+        db_profile.industry = profile_data.get('industry') or db_profile.industry
+        db_profile.skills = profile_data.get('skills') or db_profile.skills
+        db_profile.achievements = profile_data.get('achievements') or db_profile.achievements
+        db_profile.certifications = profile_data.get('certifications') or db_profile.certifications
+        db_profile.education = profile_data.get('education') or db_profile.education
+        db_profile.languages = profile_data.get('languages') or db_profile.languages
+        db_profile.projects = profile_data.get('projects') or db_profile.projects
+        
+        log = ActivityLog(user_id=int(user_id), action="Upload Resume", details=f"Successfully parsed resume: {filename}")
+        db.session.add(log)
+        
+        db.session.commit()
+        return jsonify({
+            'message': 'Resume parsed successfully! Form fields pre-filled.',
+            'profile': db_profile.to_dict()
+        }), 200
+        
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        db.session.rollback()
+        return jsonify({'error': f'Failed to parse resume: {str(e)}'}), 500
+
 
 @routes_bp.route('/api/cover-letter/generate', methods=['POST'])
 @jwt_required()
@@ -69,15 +168,12 @@ def api_generate_letter():
         
     data = request.get_json() or {}
     
-    # We expect candidate details and job details in the payload. 
-    # If not provided, we extract them from the user's Profile record.
     profile_data = data.get('profile', {})
     job_details = data.get('job_details', {})
     writing_style = data.get('writing_style', 'professional')
     template_name = data.get('template_name', 'modern')
     title = data.get('title', f"Cover Letter for {job_details.get('company_name', 'Company')}")
     
-    # If profile_data is not provided, load from db
     db_profile = Profile.query.filter_by(user_id=user.id).first()
     if not profile_data and db_profile:
         profile_data = db_profile.to_dict()
@@ -101,11 +197,32 @@ def api_generate_letter():
         db_profile.projects = profile_data.get('projects', db_profile.projects)
         
     try:
-        # 1. Run AI Generation
-        letter_content = generate_cover_letter(profile_data, job_details, writing_style)
+        # 1. Run AI Generation (returns JSON string of Versions A, B, and C)
+        versions_json_str = generate_cover_letter(profile_data, job_details, writing_style)
         
+        # Determine default selected version content to analyze
+        default_content = ""
+        default_version = "a"
+        try:
+            versions_dict = json.loads(versions_json_str)
+            style_lower = writing_style.lower()
+            if any(s in style_lower for s in ['friendly', 'creative', 'enthusiastic']):
+                default_version = 'c'
+            elif any(s in style_lower for s in ['confident', 'executive', 'luxury']):
+                default_version = 'b'
+            else:
+                default_version = 'a'
+            
+            default_content = versions_dict.get(f'version_{default_version}', versions_dict.get('version_a', ''))
+            
+            # Embed selected flag inside DB content column
+            versions_dict['selected'] = default_version
+            versions_json_str = json.dumps(versions_dict)
+        except Exception:
+            default_content = versions_json_str
+            
         # 2. Run ATS Analysis
-        ats_results = analyze_ats(profile_data, job_details.get('job_description', ''))
+        ats_results = analyze_ats(profile_data, job_details.get('job_description', ''), default_content)
         
         # 3. Create CoverLetter in db
         new_letter = CoverLetter(
@@ -120,7 +237,7 @@ def api_generate_letter():
             job_location=job_details.get('job_location', ''),
             employment_type=job_details.get('employment_type', ''),
             salary=job_details.get('salary', ''),
-            content=letter_content,
+            content=versions_json_str,
             ats_score=ats_results['ats_score'],
             keywords_matched=ats_results['keywords_matched'],
             missing_skills=ats_results['missing_skills'],
@@ -130,18 +247,23 @@ def api_generate_letter():
             suggestions=ats_results['suggestions']
         )
         
-        # Deduct 1 credit for free tier user
         if user.subscription_status == 'Free Tier':
             user.credits -= 1
             
         db.session.add(new_letter)
         
-        # Log activity
-        log = ActivityLog(user_id=user.id, action="Generate Letter", details=f"Generated letter for {new_letter.company_name}")
+        log = ActivityLog(user_id=user.id, action="Generate Letter", details=f"Generated letter versions for {new_letter.company_name}")
         db.session.add(log)
         
         db.session.commit()
-        return jsonify(new_letter.to_dict()), 201
+        
+        # Build client payload
+        res_dict = new_letter.to_dict()
+        res_dict['content_versions'] = json.loads(new_letter.content)
+        res_dict['active_version'] = default_version
+        res_dict['content'] = default_content
+        
+        return jsonify(res_dict), 201
         
     except Exception as e:
         db.session.rollback()
@@ -154,7 +276,22 @@ def api_get_letters():
     """Returns a list of all cover letters created by the authenticated user."""
     user_id = get_jwt_identity()
     letters = CoverLetter.query.filter_by(user_id=int(user_id)).order_by(CoverLetter.date_updated.desc()).all()
-    return jsonify([l.to_dict() for l in letters]), 200
+    
+    formatted_letters = []
+    for letter in letters:
+        res_dict = letter.to_dict()
+        try:
+            content_json = json.loads(letter.content)
+            res_dict['content_versions'] = content_json
+            selected = content_json.get('selected', 'a')
+            res_dict['active_version'] = selected
+            res_dict['content'] = content_json.get(f'version_{selected}', letter.content)
+        except Exception:
+            res_dict['content_versions'] = {"version_a": letter.content}
+            res_dict['active_version'] = "a"
+        formatted_letters.append(res_dict)
+        
+    return jsonify(formatted_letters), 200
 
 
 @routes_bp.route('/api/cover-letters/<int:letter_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -168,20 +305,72 @@ def api_letter_detail(letter_id):
         return jsonify({'error': 'Cover Letter not found or unauthorized'}), 404
         
     if request.method == 'GET':
-        return jsonify(letter.to_dict()), 200
+        res_dict = letter.to_dict()
+        try:
+            content_json = json.loads(letter.content)
+            res_dict['content_versions'] = content_json
+            selected = content_json.get('selected', 'a')
+            res_dict['active_version'] = selected
+            res_dict['content'] = content_json.get(f'version_{selected}', letter.content)
+        except Exception:
+            res_dict['content_versions'] = {
+                "version_a": letter.content,
+                "version_b": letter.content,
+                "version_c": letter.content,
+                "selected": "a"
+            }
+            res_dict['active_version'] = "a"
+        return jsonify(res_dict), 200
         
     elif request.method == 'PUT':
         data = request.get_json() or {}
         try:
             letter.title = data.get('title', letter.title)
-            letter.content = data.get('content', letter.content)
             letter.template_name = data.get('template_name', letter.template_name)
             letter.writing_style = data.get('writing_style', letter.writing_style)
+            
+            active_version = data.get('active_version')
+            client_content = data.get('content')
+            
+            if client_content:
+                try:
+                    content_json = json.loads(letter.content)
+                    if active_version:
+                        content_json[f'version_{active_version}'] = client_content
+                        content_json['selected'] = active_version
+                    else:
+                        sel = content_json.get('selected', 'a')
+                        content_json[f'version_{sel}'] = client_content
+                    letter.content = json.dumps(content_json)
+                except Exception:
+                    new_json = {
+                        "version_a": client_content,
+                        "version_b": client_content,
+                        "version_c": client_content,
+                        "selected": active_version or "a"
+                    }
+                    letter.content = json.dumps(new_json)
+            elif active_version:
+                # Just toggled version, update selected pointer
+                try:
+                    content_json = json.loads(letter.content)
+                    content_json['selected'] = active_version
+                    letter.content = json.dumps(content_json)
+                except Exception:
+                    pass
             
             # Recalculate ATS score in case the content was edited manually on the frontend
             profile = Profile.query.filter_by(user_id=user_id).first()
             if profile:
-                ats_results = analyze_ats(profile.to_dict(), letter.job_description)
+                active_text = ""
+                try:
+                    c_json = json.loads(letter.content)
+                    sel = c_json.get('selected', 'a')
+                    active_text = c_json.get(f'version_{sel}', letter.content)
+                except Exception:
+                    active_text = letter.content
+                    
+                ats_results = analyze_ats(profile.to_dict(), letter.job_description, active_text)
                 letter.ats_score = ats_results['ats_score']
                 letter.keywords_matched = ats_results['keywords_matched']
                 letter.missing_skills = ats_results['missing_skills']
@@ -191,7 +380,19 @@ def api_letter_detail(letter_id):
                 letter.suggestions = ats_results['suggestions']
                 
             db.session.commit()
-            return jsonify(letter.to_dict()), 200
+            
+            res_dict = letter.to_dict()
+            try:
+                content_json = json.loads(letter.content)
+                res_dict['content_versions'] = content_json
+                selected = content_json.get('selected', 'a')
+                res_dict['active_version'] = selected
+                res_dict['content'] = content_json.get(f'version_{selected}', letter.content)
+            except Exception:
+                res_dict['content_versions'] = {"version_a": letter.content}
+                res_dict['active_version'] = "a"
+                
+            return jsonify(res_dict), 200
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': f'Failed to update letter: {str(e)}'}), 500
@@ -261,7 +462,19 @@ def api_duplicate_letter(letter_id):
         )
         db.session.add(dup)
         db.session.commit()
-        return jsonify(dup.to_dict()), 201
+        
+        res_dict = dup.to_dict()
+        try:
+            content_json = json.loads(dup.content)
+            res_dict['content_versions'] = content_json
+            selected = content_json.get('selected', 'a')
+            res_dict['active_version'] = selected
+            res_dict['content'] = content_json.get(f'version_{selected}', dup.content)
+        except Exception:
+            res_dict['content_versions'] = {"version_a": dup.content}
+            res_dict['active_version'] = "a"
+            
+        return jsonify(res_dict), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -281,18 +494,39 @@ def api_improve_letter(letter_id):
     operation = data.get('operation', 'Improve Writing')
     tone = data.get('tone', letter.writing_style)
     
+    current_text = ""
+    active_version = "a"
+    try:
+        content_json = json.loads(letter.content)
+        active_version = content_json.get('selected', 'a')
+        current_text = content_json.get(f'version_{active_version}', letter.content)
+    except Exception:
+        current_text = letter.content
+        
     try:
         # Run AI text transformation
-        improved_content = improve_text(letter.content, operation, tone)
+        improved_content = improve_text(current_text, operation, tone)
         
-        # Save to letter
-        letter.content = improved_content
+        # Save back into JSON block
+        try:
+            content_json = json.loads(letter.content)
+            content_json[f'version_{active_version}'] = improved_content
+            letter.content = json.dumps(content_json)
+        except Exception:
+            new_json = {
+                "version_a": improved_content,
+                "version_b": current_text,
+                "version_c": current_text,
+                "selected": "a"
+            }
+            letter.content = json.dumps(new_json)
+            
         letter.writing_style = tone.lower()
         
         # Recalculate ATS
         profile = Profile.query.filter_by(user_id=user_id).first()
         if profile:
-            ats_results = analyze_ats(profile.to_dict(), letter.job_description)
+            ats_results = analyze_ats(profile.to_dict(), letter.job_description, improved_content)
             letter.ats_score = ats_results['ats_score']
             letter.keywords_matched = ats_results['keywords_matched']
             letter.missing_skills = ats_results['missing_skills']
@@ -302,7 +536,19 @@ def api_improve_letter(letter_id):
             letter.suggestions = ats_results['suggestions']
             
         db.session.commit()
-        return jsonify(letter.to_dict()), 200
+        
+        res_dict = letter.to_dict()
+        try:
+            content_json = json.loads(letter.content)
+            res_dict['content_versions'] = content_json
+            selected = content_json.get('selected', 'a')
+            res_dict['active_version'] = selected
+            res_dict['content'] = content_json.get(f'version_{selected}', letter.content)
+        except Exception:
+            res_dict['content_versions'] = {"version_a": letter.content}
+            res_dict['active_version'] = "a"
+            
+        return jsonify(res_dict), 200
         
     except Exception as e:
         db.session.rollback()
@@ -324,6 +570,15 @@ def api_export_docx(letter_id):
         return jsonify({'error': 'Profile not found'}), 404
         
     try:
+        # Extract active selected version text
+        content_text = letter.content
+        try:
+            content_json = json.loads(letter.content)
+            sel = content_json.get('selected', 'a')
+            content_text = content_json.get(f'version_{sel}', letter.content)
+        except Exception:
+            pass
+            
         # Compile document data
         doc_data = {
             'full_name': profile.full_name or 'Applicant',
@@ -334,7 +589,7 @@ def api_export_docx(letter_id):
             'hiring_manager': letter.hiring_manager or '',
             'company_name': letter.company_name or '',
             'job_location': letter.job_location or '',
-            'content': letter.content
+            'content': content_text
         }
         
         file_stream = create_docx_file(doc_data)
@@ -367,8 +622,17 @@ def api_email_letter(letter_id):
         return jsonify({'error': 'Recipient email is required'}), 400
         
     try:
+        # Extract active version content
+        content_text = letter.content
+        try:
+            content_json = json.loads(letter.content)
+            sel = content_json.get('selected', 'a')
+            content_text = content_json.get(f'version_{sel}', letter.content)
+        except Exception:
+            pass
+            
         subject = f"Cover Letter for {letter.job_title} at {letter.company_name}"
-        success, msg = send_cover_letter_email(email_to, subject, letter.content)
+        success, msg = send_cover_letter_email(email_to, subject, content_text)
         
         if success:
             log = ActivityLog(user_id=user_id, action="Email Letter", details=f"Emailed cover letter to {email_to}")
@@ -412,12 +676,21 @@ def api_get_shared_letter(token):
     user = User.query.get(letter.user_id)
     profile = Profile.query.filter_by(user_id=user.id).first()
     
+    # Extract active text content
+    content_text = letter.content
+    try:
+        content_json = json.loads(letter.content)
+        sel = content_json.get('selected', 'a')
+        content_text = content_json.get(f'version_{sel}', letter.content)
+    except Exception:
+        pass
+        
     return jsonify({
         'title': letter.title,
         'template_name': letter.template_name,
         'job_title': letter.job_title,
         'company_name': letter.company_name,
-        'content': letter.content,
+        'content': content_text,
         'full_name': profile.full_name if profile else 'Applicant',
         'email': profile.email if profile else '',
         'phone': profile.phone if profile else '',
