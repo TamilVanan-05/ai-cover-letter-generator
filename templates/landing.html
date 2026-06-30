@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}CoverCraft - Production Ready AI Cover Letter Generator{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative min-h-[85vh] flex items-center justify-center pt-24 pb-16 overflow-hidden">
+    <div class="container relative z-10">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-4 border border-indigo-500/20">
+                    <i class="fa-solid fa-sparkles"></i> The New Standard of Job Hunting
+                </span>
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-tight mb-4">
+                    Stop Sending <br class="hidden md:inline">
+                    <span class="gradient-text font-extrabold">Generic Cover Letters.</span>
+                </h1>
+                <p class="text-lg text-gray-300 mb-8 max-w-xl mx-auto lg:mx-0">
+                    CoverCraft uses custom-engineered AI to match your experience with job postings in seconds, outputting ATS-friendly, recruiter-approved documents that land interviews.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                    <a href="/login?signup=true" class="btn btn-primary-glow px-8 py-3 text-base font-bold rounded-lg shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Build Your Letter Free
+                    </a>
+                    <a href="#how-it-works" class="btn btn-outline-glass px-8 py-3 text-base font-bold rounded-lg">
+                        Learn How It Works <i class="fa-solid fa-arrow-down ml-2 text-xs"></i>
+                    </a>
+                </div>
+                <div class="mt-8 flex items-center justify-center lg:justify-start gap-6 text-gray-400 text-sm">
+                    <span><i class="fa-solid fa-check text-emerald-500 mr-1.5"></i> ATS-Engine Verified</span>
+                    <span><i class="fa-solid fa-check text-emerald-500 mr-1.5"></i> 15+ Designer Layouts</span>
+                </div>
+            </div>
+            
+            <div class="col-lg-6" data-aos="fade-left">
+                <!-- Floating Glass Card Preview -->
+                <div class="relative mx-auto max-w-md p-2 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-pink-500/20 border border-white/10 shadow-2xl">
+                    <div class="glass-panel p-4 rounded-xl text-left font-mono text-xs text-gray-400">
+                        <div class="flex items-center justify-between border-b border-gray-800 pb-3 mb-3">
+                            <span class="text-gray-500">generation_wizard.json</span>
+                            <div class="flex gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-red-500/50"></span>
+                                <span class="w-3 h-3 rounded-full bg-yellow-500/50"></span>
+                                <span class="w-3 h-3 rounded-full bg-green-500/50"></span>
+                            </div>
+                        </div>
+                        <span class="text-indigo-400">"profile"</span>: { <br>
+                        &nbsp;&nbsp; "name": <span class="text-pink-400">"Alex Carter"</span>, <br>
+                        &nbsp;&nbsp; "role": <span class="text-pink-400">"Senior AI Engineer"</span>, <br>
+                        &nbsp;&nbsp; "skills": [<span class="text-emerald-400">"Python", "LLMs", "Docker"</span>] <br>
+                        }, <br>
+                        <span class="text-indigo-400">"job_description"</span>: <span class="text-pink-400">"Seeking engineer with experience scaling LLM operations..."</span>, <br>
+                        <span class="text-indigo-400">"writing_style"</span>: <span class="text-purple-400">"Luxury Executive"</span> <br>
+                        <div class="mt-4 p-3 rounded bg-slate-900/60 border border-white/5 text-gray-300 font-sans leading-relaxed text-xs">
+                            <strong>Dear hiring manager,</strong><br><br>
+                            I am writing to propose my candidacy for the position of AI Engineer at your firm. Throughout my distinguished career scaling machine learning pipelines, I have leveraged Docker, PyTorch, and generative models to optimize database latency by 45%...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-20 bg-slate-900/50">
+    <div class="container">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-indigo-400 text-sm font-bold uppercase tracking-wider">Features</span>
+            <h2 class="text-3xl md:text-4xl font-extrabold mt-2 mb-4">Engineered to Get You Hired</h2>
+            <p class="text-gray-400">Our features are custom built alongside ATS checkers and recruiters to bypass filters and land on decision-maker desks.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Feature 1 -->
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-panel p-8 h-100 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-6 text-xl">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">AI 5-Step Generator</h4>
+                        <p class="text-sm text-gray-400 leading-relaxed mb-6">
+                            Complete our modular wizard mapping personal info, job details, history, skills, and tones, then let the AI draft custom paragraphs.
+                        </p>
+                    </div>
+                    <span class="text-xs font-bold text-indigo-400">ACCURATE &amp; TARGETED</span>
+                </div>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-panel p-8 h-100 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 mb-6 text-xl">
+                            <i class="fa-solid fa-gauge-high"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">ATS Score Optimization</h4>
+                        <p class="text-sm text-gray-400 leading-relaxed mb-6">
+                            Run your letters against job descriptions in real-time. Scan missing keywords, readability, action verb density, and score rating instantly.
+                        </p>
+                    </div>
+                    <span class="text-xs font-bold text-pink-400">CHARTS &amp; GAUGES POWERED</span>
+                </div>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-panel p-8 h-100 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-6 text-xl">
+                            <i class="fa-solid fa-file-arrow-down"></i>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3">Premium Export Options</h4>
+                        <p class="text-sm text-gray-400 leading-relaxed mb-6">
+                            Download matching templates directly as styled PDF and DOCX files. Share publicly, copy to clipboard, or email straight to recruiters.
+                        </p>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-400">PDF, DOCX &amp; SHARES</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-20 relative">
+    <div class="container">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-indigo-400 text-sm font-bold uppercase tracking-wider">Product Walkthrough</span>
+            <h2 class="text-3xl md:text-4xl font-extrabold mt-2 mb-4">How It Works</h2>
+            <p class="text-gray-400">Generate a cover letter optimized to defeat competitive filtering algorithms in three easy steps.</p>
+        </div>
+        
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5" data-aos="fade-right">
+                <div class="flex flex-col gap-8">
+                    <!-- Step 1 -->
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-indigo-500 text-white font-bold flex items-center justify-center shrink-0">1</div>
+                        <div>
+                            <h5 class="text-lg font-bold mb-1">Set Your Profile</h5>
+                            <p class="text-sm text-gray-400">Input your professional achievements, skills, and background information into your secure account profile.</p>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-pink-500 text-white font-bold flex items-center justify-center shrink-0">2</div>
+                        <div>
+                            <h5 class="text-lg font-bold mb-1">Paste Target Job Details</h5>
+                            <p class="text-sm text-gray-400">Paste the job title, company name, location, and job description text you're targeting.</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center shrink-0">3</div>
+                        <div>
+                            <h5 class="text-lg font-bold mb-1">Generate &amp; Optimize</h5>
+                            <p class="text-sm text-gray-400">Cycle through 15+ design templates, check your real-time ATS match rating, and edit instantly with automated AI improvement buttons.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7 text-center" data-aos="zoom-in">
+                <!-- Visual Workspace Demo Mockup -->
+                <div class="glass-panel p-2 rounded-2xl border border-white/10 shadow-2xl">
+                    <div class="bg-slate-950/80 rounded-xl p-4 text-left">
+                        <div class="flex items-center gap-2 mb-4 border-b border-gray-800 pb-3">
+                            <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                            <span class="text-sm text-gray-300 font-bold">Live Workspace Sandbox</span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-5 border-r border-gray-800 pr-3">
+                                <label class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Target Job Description</label>
+                                <div class="text-[11px] text-gray-400 bg-slate-900 p-2 rounded mt-1 max-h-40 overflow-y-auto">
+                                    "We are looking for a Python Developer experienced with Flask, Docker, and REST APIs. Knowledge of MySQL databases and unit testing is highly preferred."
+                                </div>
+                                <div class="mt-3 p-2 bg-indigo-500/10 border border-indigo-500/20 rounded">
+                                    <div class="flex items-center justify-between text-[11px]">
+                                        <span class="font-bold text-indigo-400">ATS Rating:</span>
+                                        <span class="font-bold text-emerald-400 text-xs">88%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 h-1 rounded-full mt-1.5 overflow-hidden">
+                                        <div class="bg-gradient-to-r from-indigo-500 to-pink-500 h-1" style="width: 88%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-7 pl-3 flex flex-col justify-between">
+                                <label class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Generated Output (Template: Google)</label>
+                                <div class="text-[10px] text-gray-300 font-serif leading-relaxed mt-2 bg-white text-slate-800 p-3 rounded shadow-inner max-h-40 overflow-y-auto">
+                                    <strong>ALEX CARTER</strong><br>
+                                    alex@example.com | 555-0199<br><br>
+                                    Dear Hiring Committee,<br><br>
+                                    I am writing to express my interest in the Python Developer position with your team. Having built REST APIs for the past 5 years using Flask, I have honed my skills in Docker orchestration and MySQL...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ATS Optimization Spotlight -->
+<section class="py-20 bg-slate-900/30">
+    <div class="container">
+        <div class="row align-items-center g-5 flex-row-reverse">
+            <div class="col-lg-6" data-aos="fade-left">
+                <span class="text-pink-500 text-sm font-bold uppercase tracking-wider">ATS Checker</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold mt-2 mb-4">Never Get Filtered Out Again</h2>
+                <p class="text-gray-300 leading-relaxed mb-6">
+                    Our platform incorporates a parser that functions identically to enterprise ATS systems. It reviews syntax structures, matches critical industry keywords, flags missing skills, and checks formatting layouts so you can address issues before sending.
+                </p>
+                <ul class="list-unstyled d-grid gap-3 text-sm text-gray-300">
+                    <li><i class="fa-solid fa-circle-check text-pink-500 mr-2"></i> <strong>Readability Analysis</strong>: Scores text flow and sentence lengths.</li>
+                    <li><i class="fa-solid fa-circle-check text-pink-500 mr-2"></i> <strong>Keyword Optimization</strong>: Displays present vs missing tags in seconds.</li>
+                    <li><i class="fa-solid fa-circle-check text-pink-500 mr-2"></i> <strong>Action Verbs Tracking</strong>: Prompts replacement of weak verbs.</li>
+                </ul>
+            </div>
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="glass-panel p-6 max-w-md mx-auto">
+                    <h5 class="font-bold mb-4 flex items-center justify-between text-sm">
+                        <span>ATS Optimization Report</span>
+                        <span class="badge bg-indigo-500 text-xs">AI Engines</span>
+                    </h5>
+                    <!-- Mock score gauge -->
+                    <div class="flex items-center gap-6 justify-center mb-6">
+                        <div class="score-circle">
+                            <span class="score-value">85</span>
+                        </div>
+                        <div>
+                            <h6 class="font-bold mb-1 text-white">Good Fit</h6>
+                            <p class="text-xs text-gray-400 max-w-[150px]">Your letter satisfies critical keyword indicators.</p>
+                        </div>
+                    </div>
+                    <hr class="border-gray-800 my-4">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-400">Keyword Match:</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Match Good</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-400">Action Verbs:</span>
+                            <span class="text-yellow-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Add 2 more</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-gray-400">Grammar &amp; Spelling:</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i> Verified</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Templates Preview Section -->
+<section id="templates" class="py-20">
+    <div class="container">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-indigo-400 text-sm font-bold uppercase tracking-wider">15+ Templates</span>
+            <h2 class="text-3xl md:text-4xl font-extrabold mt-2 mb-4">Sleek Formats Built For Leaders</h2>
+            <p class="text-gray-400">Choose from modern, minimalist, tech-accented, or luxury corporate formats styled in perfect dimensions.</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Modern -->
+            <div class="col-6 col-md-4 col-lg-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="glass-panel p-3 text-center hover:scale-105 transition-all">
+                    <div class="bg-white h-40 rounded mb-3 flex items-center justify-center shadow-inner overflow-hidden">
+                        <div class="w-full h-full p-3 text-left font-serif text-[6px] text-slate-800 border-l-[3px] border-indigo-600 leading-tight">
+                            <strong class="text-[9px] block">ALEX CARTER</strong>
+                            <span class="text-gray-400 block mb-1">Developer</span>
+                            Dear Hiring Manager, I am writing to submit my application...
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold">Modern Layout</span>
+                </div>
+            </div>
+            
+            <!-- Professional -->
+            <div class="col-6 col-md-4 col-lg-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="glass-panel p-3 text-center hover:scale-105 transition-all">
+                    <div class="bg-white h-40 rounded mb-3 flex items-center justify-center shadow-inner overflow-hidden">
+                        <div class="w-full h-full p-3 text-center font-sans text-[6px] text-slate-800 leading-tight">
+                            <strong class="text-[9px] block border-b border-slate-900 pb-1 mb-1">ALEX CARTER</strong>
+                            Dear Hiring Manager, <br> I am writing to submit my application...
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold">Professional Standard</span>
+                </div>
+            </div>
+            
+            <!-- Executive -->
+            <div class="col-6 col-md-4 col-lg-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="glass-panel p-3 text-center hover:scale-105 transition-all">
+                    <div class="bg-white h-40 rounded mb-3 flex items-center justify-center shadow-inner overflow-hidden">
+                        <div class="w-full h-full p-3 text-left font-serif text-[6px] text-slate-800 leading-tight bg-stone-50">
+                            <strong class="text-[9px] text-amber-900 block border-b-2 border-double border-amber-900 pb-1 mb-2">ALEX CARTER</strong>
+                            Dear Hiring Manager, <br> I am writing to submit my candidacy...
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold">Executive Double Border</span>
+                </div>
+            </div>
+            
+            <!-- Creative -->
+            <div class="col-6 col-md-4 col-lg-3" data-aos="zoom-in" data-aos-delay="400">
+                <div class="glass-panel p-3 text-center hover:scale-105 transition-all">
+                    <div class="bg-white h-40 rounded mb-3 flex items-center justify-center shadow-inner overflow-hidden">
+                        <div class="w-full h-full p-3 text-left font-sans text-[5px] text-slate-800 leading-tight flex gap-2">
+                            <div class="w-1/3 border-r border-slate-200 pr-1 text-slate-400">Alex Carter<br>Developer</div>
+                            <div class="w-2/3">
+                                <strong class="text-[7px] text-pink-500 block">CARTER</strong>
+                                Dear Hiring Manager, I am writing to submit my...
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold">Creative Sidebar</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-12">
+            <a href="/login?signup=true" class="btn btn-outline-glass px-6 py-3 font-semibold">Sign Up to See All 15+ Templates</a>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Plans -->
+<section id="pricing" class="py-20 bg-slate-900/50">
+    <div class="container">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-pink-500 text-sm font-bold uppercase tracking-wider">Pricing</span>
+            <h2 class="text-3xl md:text-4xl font-extrabold mt-2 mb-4">Flexible Plans For Job Seekers</h2>
+            <p class="text-gray-400">Invest in your career. Get access to advanced AI transformations, real-time ATS optimization dashboards, and premium templates.</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Free Tier -->
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-panel p-8 h-100 price-card d-flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-lg font-bold mb-1">Free Sandbox</h4>
+                        <p class="text-xs text-gray-400 mb-6">Perfect for trying out our wizard features.</p>
+                        <div class="mb-6 flex items-baseline">
+                            <span class="text-4xl font-extrabold text-white">$0</span>
+                            <span class="text-sm text-gray-400 ml-2">/ month</span>
+                        </div>
+                        <ul class="list-unstyled d-grid gap-3 text-sm mb-8 text-gray-300">
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> 5 Cover Letter Generations</li>
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> 3 Standard Layout Templates</li>
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> PDF &amp; Text Copy Exports</li>
+                            <li><i class="fa-solid fa-xmark text-red-500 mr-2"></i> No DOCX Word Download</li>
+                            <li><i class="fa-solid fa-xmark text-red-500 mr-2"></i> No ATS Keyword Scanning</li>
+                        </ul>
+                    </div>
+                    <a href="/login?signup=true" class="btn btn-outline-glass w-full py-2">Get Started</a>
+                </div>
+            </div>
+            
+            <!-- Pro Tier -->
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-panel p-8 h-100 price-card featured border-indigo-500/50 d-flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-lg font-bold mb-1">Premium Pro</h4>
+                        <p class="text-xs text-gray-400 mb-6">The ultimate package for active job seekers.</p>
+                        <div class="mb-6 flex items-baseline">
+                            <span class="text-4xl font-extrabold text-white">$15</span>
+                            <span class="text-sm text-gray-400 ml-2">/ month</span>
+                        </div>
+                        <ul class="list-unstyled d-grid gap-3 text-sm mb-8 text-gray-300">
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i> Unlimited AI Cover Letters</li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i> Unlock All 15+ Templates</li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i> DOCX &amp; PDF High-Quality Exports</li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i> Full Real-Time ATS Analytics</li>
+                            <li><i class="fa-solid fa-check text-emerald-400 mr-2"></i> Share Links &amp; Email Sending</li>
+                        </ul>
+                    </div>
+                    <a href="/login?signup=true" class="btn btn-primary-glow w-full py-2">Go Pro Now</a>
+                </div>
+            </div>
+            
+            <!-- Enterprise -->
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-panel p-8 h-100 price-card d-flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-lg font-bold mb-1">Enterprise Plan</h4>
+                        <p class="text-xs text-gray-400 mb-6">For career agencies and staffing firms.</p>
+                        <div class="mb-6 flex items-baseline">
+                            <span class="text-4xl font-extrabold text-white">$49</span>
+                            <span class="text-sm text-gray-400 ml-2">/ month</span>
+                        </div>
+                        <ul class="list-unstyled d-grid gap-3 text-sm mb-8 text-gray-300">
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> Multiple Team Accounts</li>
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> Dedicated API Integration</li>
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> Custom CSS White-Label Templates</li>
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> Direct CRM &amp; ATS Integrations</li>
+                            <li><i class="fa-solid fa-check text-indigo-400 mr-2"></i> Dedicated Account Executive</li>
+                        </ul>
+                    </div>
+                    <a href="/login?signup=true" class="btn btn-outline-glass w-full py-2">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="py-20">
+    <div class="container">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-indigo-400 text-sm font-bold uppercase tracking-wider">FAQs</span>
+            <h2 class="text-3xl md:text-4xl font-extrabold mt-2 mb-4">Frequently Asked Questions</h2>
+            <p class="text-gray-400">Have questions about our ATS parser or generating custom documents? Find quick answers here.</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion accordion-flush" id="faqAccordion">
+                    <!-- FAQ 1 -->
+                    <div class="accordion-item glass-panel border border-white/5 mb-3 overflow-hidden rounded-xl">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-transparent text-white font-bold py-4 focus:shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true">
+                                What makes this generator different from ChatGPT?
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-gray-400 text-sm border-t border-white/5 pt-3 leading-relaxed">
+                                Unlike standard ChatGPT prompts, CoverCraft runs your cover letter through an integrated ATS compliance scanner to verify keyword match, readability, and recruiter-friendly action verbs. It formats your document using built-in designer templates immediately ready for print or word processing.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FAQ 2 -->
+                    <div class="accordion-item glass-panel border border-white/5 mb-3 overflow-hidden rounded-xl">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-transparent text-white font-bold py-4 collapsed focus:shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                How does the ATS compliance score work?
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-gray-400 text-sm border-t border-white/5 pt-3 leading-relaxed">
+                                Our ATS engine parses the targeted job description, compares it with your achievements and candidate skills profile, and computes a score from 0-100 based on matching keyword density, readability index, presence of action verbs, and header completeness.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FAQ 3 -->
+                    <div class="accordion-item glass-panel border border-white/5 mb-3 overflow-hidden rounded-xl">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-transparent text-white font-bold py-4 collapsed focus:shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                Can I download as DOCX for Microsoft Word?
+                            </h2>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-gray-400 text-sm border-t border-white/5 pt-3 leading-relaxed">
+                                Yes! While the free plan is limited to PDF and text copying, upgrading to Pro grants access to download professionally styled DOCX documents with perfect 1-inch margins and matching typography compatible with Microsoft Word.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

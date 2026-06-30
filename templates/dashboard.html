@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+
+{% block title %}Workspace Dashboard - CoverCraft{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/templates.css') }}">
+<style>
+    /* Premium Dashboard Sidebar overrides */
+    .dash-sidebar-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px 16px;
+        color: var(--text-muted);
+        border-radius: var(--radius-sm);
+        transition: var(--transition-fast);
+        border: none;
+        background: transparent;
+        text-align: left;
+    }
+    
+    .dash-sidebar-btn:hover {
+        background: rgba(255, 255, 255, 0.04);
+        color: white;
+    }
+    
+    .dash-sidebar-btn.active {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary);
+        font-weight: 600;
+        border-left: 3px solid var(--primary);
+    }
+    
+    .dashboard-container {
+        min-height: calc(100vh - 80px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <div class="row min-h-[85vh]">
+        
+        <!-- SIDE NAVIGATION BAR -->
+        <aside class="col-lg-2 border-r border-gray-800 p-4 flex flex-col justify-between bg-slate-950/20">
+            <div class="flex flex-col gap-2">
+                <div class="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Workspace</div>
+                <button onclick="showDashView('wizard')" id="sideBtn-wizard" class="dash-sidebar-btn active">
+                    <i class="fa-solid fa-square-plus"></i> Create Letter
+                </button>
+                <button onclick="showDashView('letters')" id="sideBtn-letters" class="dash-sidebar-btn">
+                    <i class="fa-solid fa-folder-open"></i> Saved Letters
+                </button>
+                <button onclick="showDashView('history')" id="sideBtn-history" class="dash-sidebar-btn">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Usage History
+                </button>
+                
+                <div class="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-widest mt-4 mb-2">Account</div>
+                <button onclick="showDashView('profile')" id="sideBtn-profile" class="dash-sidebar-btn">
+                    <i class="fa-solid fa-user-tie"></i> Profile Details
+                </button>
+                <button onclick="showDashView('subscription')" id="sideBtn-subscription" class="dash-sidebar-btn">
+                    <i class="fa-solid fa-credit-card"></i> Billing &amp; Credits
+                </button>
+                <a href="/admin" id="sideBtn-admin" class="dash-sidebar-btn hidden">
+                    <i class="fa-solid fa-lock-open text-pink-500"></i> Admin Panel
+                </a>
+            </div>
+            
+            <div class="mt-8 border-t border-gray-800 pt-4 flex flex-col gap-3">
+                <!-- User Credits Tracker -->
+                <div class="p-3 rounded-lg glass-panel-light">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span>Credits Remaining:</span>
+                        <strong class="text-indigo-400" id="userCreditVal">5 / 5</strong>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-indigo-500 h-full" id="userCreditBar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="dash-sidebar-btn text-red-400 hover:bg-red-500/10">
+                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                </button>
+            </div>
+        </aside>
+        
+        <!-- MAIN DASHBOARD CONTENT AREA -->
+        <main class="col-lg-10 p-6 flex flex-col justify-start">
+            
+            <!-- VIEW 1: GENERATE COVER LETTER WIZARD -->
+            <section id="view-wizard" class="dash-view">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-extrabold">Generate AI Cover Letter</h2>
+                        <p class="text-sm text-gray-400">Complete the 5-step wizard to create an ATS optimized cover letter.</p>
+                    </div>
+                    <button onclick="loadProfileIntoWizard()" class="btn btn-outline-glass btn-sm text-xs py-2">
+                        <i class="fa-solid fa-sync mr-1"></i> Sync Profile Details
+                    </button>
+                </div>
+                
+                <!-- Wizard Stepper Indicators -->
+                <div class="glass-panel p-4 mb-6 flex justify-between items-center text-center">
+                    <div class="step-item active flex-1" id="wizardStepIndicator-1">
+                        <div class="step-dot mx-auto">1</div>
+                        <span class="step-label">Personal Info</span>
+                    </div>
+                    <div class="flex-grow border-t border-gray-800 h-0.5 mx-2"></div>
+                    
+                    <div class="step-item flex-1" id="wizardStepIndicator-2">
+                        <div class="step-dot mx-auto">2</div>
+                        <span class="step-label">Job Details</span>
+                    </div>
+                    <div class="flex-grow border-t border-gray-800 h-0.5 mx-2"></div>
+                    
+                    <div class="step-item flex-1" id="wizardStepIndicator-3">
+                        <div class="step-dot mx-auto">3</div>
+                        <span class="step-label">Professional Info</span>
+                    </div>
+                    <div class="flex-grow border-t border-gray-800 h-0.5 mx-2"></div>
+                    
+                    <div class="step-item flex-1" id="wizardStepIndicator-4">
+                        <div class="step-dot mx-auto">4</div>
+                        <span class="step-label">Writing Tone</span>
+                    </div>
+                    <div class="flex-grow border-t border-gray-800 h-0.5 mx-2"></div>
+                    
+                    <div class="step-item flex-1" id="wizardStepIndicator-5">
+                        <div class="step-dot mx-auto">5</div>
+                        <span class="step-label">AI Review</span>
+                    </div>
+                </div>
+                
+                <!-- Wizard Form Cards -->
+                <div class="glass-panel p-6">
+                    
+                    <!-- STEP 1: PERSONAL INFORMATION -->
+                    <div class="wizard-step-section" id="wizardStep-1">
+                        <h4 class="text-lg font-bold mb-4"><i class="fa-solid fa-address-card text-indigoGlow mr-2"></i> Step 1: Personal Details</h4>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Full Name</label>
+                                <input type="text" id="wizFullname" class="form-control form-glass-input text-sm" placeholder="Alex Carter">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
+                                <input type="email" id="wizEmail" class="form-control form-glass-input text-sm" placeholder="alex@example.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Phone Number</label>
+                                <input type="text" id="wizPhone" class="form-control form-glass-input text-sm" placeholder="(555) 019-2834">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Location</label>
+                                <input type="text" id="wizLocation" class="form-control form-glass-input text-sm" placeholder="San Francisco, CA">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">LinkedIn Profile URL (Optional)</label>
+                                <input type="url" id="wizLinkedin" class="form-control form-glass-input text-sm" placeholder="https://linkedin.com/in/alex">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Portfolio/Website URL (Optional)</label>
+                                <input type="url" id="wizPortfolio" class="form-control form-glass-input text-sm" placeholder="https://alexcarter.dev">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- STEP 2: JOB DETAILS -->
+                    <div class="wizard-step-section hidden" id="wizardStep-2">
+                        <h4 class="text-lg font-bold mb-4"><i class="fa-solid fa-briefcase text-indigoGlow mr-2"></i> Step 2: Target Position Information</h4>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Job Title</label>
+                                <input type="text" id="wizJobtitle" class="form-control form-glass-input text-sm" placeholder="Python Flask Developer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Company Name</label>
+                                <input type="text" id="wizCompany" class="form-control form-glass-input text-sm" placeholder="TechCorp Solutions">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Hiring Manager Name (Optional)</label>
+                                <input type="text" id="wizManager" class="form-control form-glass-input text-sm" placeholder="Jane Doe">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Employment Type</label>
+                                <select id="wizType" class="form-control form-glass-input text-sm">
+                                    <option value="Full-time">Full-time</option>
+                                    <option value="Part-time">Part-time</option>
+                                    <option value="Contract">Contract</option>
+                                    <option value="Internship">Internship</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Job Location (e.g. Remote, NY)</label>
+                                <input type="text" id="wizJobLoc" class="form-control form-glass-input text-sm" placeholder="Remote">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Salary Estimate (Optional)</label>
+                                <input type="text" id="wizSalary" class="form-control form-glass-input text-sm" placeholder="$120k - $140k">
+                            </div>
+                            <div class="col-12">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Job Description (Paste Job Post Details)</label>
+                                <textarea id="wizDescription" rows="5" class="form-control form-glass-input text-sm font-sans" placeholder="Paste the job description text here..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- STEP 3: PROFESSIONAL INFORMATION -->
+                    <div class="wizard-step-section hidden" id="wizardStep-3">
+                        <h4 class="text-lg font-bold mb-4"><i class="fa-solid fa-graduation-cap text-indigoGlow mr-2"></i> Step 3: Your Background &amp; Experience</h4>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Years of Experience</label>
+                                <input type="number" id="wizExperience" class="form-control form-glass-input text-sm" placeholder="5" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Current Position</label>
+                                <input type="text" id="wizCurrentPos" class="form-control form-glass-input text-sm" placeholder="Software Engineer">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Previous Position</label>
+                                <input type="text" id="wizPreviousPos" class="form-control form-glass-input text-sm" placeholder="Junior Python Developer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Industry Sector</label>
+                                <input type="text" id="wizIndustry" class="form-control form-glass-input text-sm" placeholder="Technology / SaaS">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Technical Skills (Comma separated)</label>
+                                <input type="text" id="wizSkills" class="form-control form-glass-input text-sm" placeholder="Python, Flask, SQL, Docker, APIs">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Certifications (Comma separated)</label>
+                                <input type="text" id="wizCerts" class="form-control form-glass-input text-sm" placeholder="AWS Cloud Practitioner, Certified Scrum Master">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Education / Credentials</label>
+                                <input type="text" id="wizEducation" class="form-control form-glass-input text-sm" placeholder="B.S. in Computer Science - State University">
+                            </div>
+                            <div class="col-12">
+                                <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Key Career Achievements (One per line)</label>
+                                <textarea id="wizAchievements" rows="3" class="form-control form-glass-input text-sm" placeholder="Optimized API database queries reducing lookup latency by 35%&#10;Spearheaded a team of 3 developers to ship Flask-based services&#10;Automated container pipelines saving 4 developer hours weekly"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- STEP 4: WRITING STYLE -->
+                    <div class="wizard-step-section hidden" id="wizardStep-4">
+                        <h4 class="text-lg font-bold mb-4"><i class="fa-solid fa-pen-nib text-indigoGlow mr-2"></i> Step 4: Select Cover Letter Tone</h4>
+                        <p class="text-xs text-gray-400 mb-6">Choose a writing style that matches the company culture and job level.</p>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="toneSelectorGrid">
+                            <button onclick="selectWizardTone('Professional')" class="style-btn active" id="toneBtn-Professional">Professional</button>
+                            <button onclick="selectWizardTone('Executive')" class="style-btn" id="toneBtn-Executive">Executive</button>
+                            <button onclick="selectWizardTone('Corporate')" class="style-btn" id="toneBtn-Corporate">Corporate</button>
+                            <button onclick="selectWizardTone('Friendly')" class="style-btn" id="toneBtn-Friendly">Friendly</button>
+                            <button onclick="selectWizardTone('Creative')" class="style-btn" id="toneBtn-Creative">Creative</button>
+                            <button onclick="selectWizardTone('Formal')" class="style-btn" id="toneBtn-Formal">Formal</button>
+                            <button onclick="selectWizardTone('Confident')" class="style-btn" id="toneBtn-Confident">Confident</button>
+                            <button onclick="selectWizardTone('Enthusiastic')" class="style-btn" id="toneBtn-Enthusiastic">Enthusiastic</button>
+                            <button onclick="selectWizardTone('Minimal')" class="style-btn" id="toneBtn-Minimal">Minimal</button>
+                            <button onclick="selectWizardTone('Luxury Executive')" class="style-btn" id="toneBtn-LuxuryExecutive">Luxury Executive</button>
+                        </div>
+                    </div>
+                    
+                    <!-- STEP 5: AI GENERATION LOADING & EDITING WORKSPACE -->
+                    <div class="wizard-step-section hidden" id="wizardStep-5">
+                        <!-- 5a. LOADING SCREEN -->
+                        <div id="wizardLoadingScreen" class="text-center py-16">
+                            <div class="spinner-border text-indigoGlow mb-4" role="status" style="width: 3rem; height: 3rem;"></div>
+                            <h4 class="text-xl font-bold">Synthesizing Job Elements...</h4>
+                            <p class="text-sm text-gray-400 max-w-sm mx-auto mt-2">Our AI is parsing keywords and comparing achievements to write a tailored recruiter-approved cover letter.</p>
+                        </div>
+                        
+                        <!-- 5b. RICH INTERACTIVE EDITING WORKSPACE -->
+                        <div id="wizardWorkspace" class="hidden">
+                            <div class="row g-4">
+                                
+                                <!-- Editor Sidebar Tools & Manual Box -->
+                                <div class="col-lg-5">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h5 class="font-bold text-sm">Cover Letter Editor</h5>
+                                        <span class="text-xs text-gray-500 font-mono" id="wordCounter">Words: 0</span>
+                                    </div>
+                                    <textarea id="workspaceEditorText" rows="20" class="form-control form-glass-input text-xs font-mono mb-4 w-full" oninput="updateLetterPreviewLive()"></textarea>
+                                    
+                                    <!-- AI Modifier Buttons -->
+                                    <div class="glass-panel p-4 mb-4">
+                                        <h6 class="font-bold text-xs uppercase tracking-wider text-gray-400 mb-3"><i class="fa-solid fa-wand-magic mr-1 text-pink-500"></i> AI Improvements</h6>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button onclick="runAiImprovement('Improve Writing')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Improve</button>
+                                            <button onclick="runAiImprovement('Shorten')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Shorten</button>
+                                            <button onclick="runAiImprovement('Expand')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Expand</button>
+                                            <button onclick="runAiImprovement('Rewrite')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Rewrite</button>
+                                            <button onclick="runAiImprovement('Grammar Fix')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Grammar Fix</button>
+                                            <button onclick="runAiImprovement('Humanize')" class="btn btn-outline-glass btn-xs text-xs py-1.5 px-2.5 hover:bg-indigo-500/10">Humanize</button>
+                                        </div>
+                                        <hr class="border-gray-800 my-3">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <label class="text-[11px] text-gray-400">Change Tone:</label>
+                                            <select id="workspaceToneSelector" class="form-control form-glass-input text-[11px] py-1 px-2 w-auto" onchange="changeWorkspaceTone()">
+                                                <option value="Professional">Professional</option>
+                                                <option value="Executive">Executive</option>
+                                                <option value="Corporate">Corporate</option>
+                                                <option value="Friendly">Friendly</option>
+                                                <option value="Creative">Creative</option>
+                                                <option value="Formal">Formal</option>
+                                                <option value="Confident">Confident</option>
+                                                <option value="Enthusiastic">Enthusiastic</option>
+                                                <option value="Minimal">Minimal</option>
+                                                <option value="Luxury Executive">Luxury Executive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Export Panel Actions -->
+                                    <div class="glass-panel p-4">
+                                        <h6 class="font-bold text-xs uppercase tracking-wider text-gray-400 mb-3"><i class="fa-solid fa-file-export mr-1 text-emerald-400"></i> Export &amp; Sharing</h6>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <button onclick="exportToPdf()" class="btn btn-primary-glow btn-sm text-xs py-2 flex items-center justify-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF Download</button>
+                                            <button onclick="exportToDocx()" class="btn btn-outline-glass btn-sm text-xs py-2 flex items-center justify-center gap-1.5"><i class="fa-solid fa-file-word"></i> Word DOCX</button>
+                                            <button onclick="copyToClipboard()" class="btn btn-outline-glass btn-sm text-xs py-2 flex items-center justify-center gap-1.5"><i class="fa-solid fa-copy"></i> Copy Text</button>
+                                            <button onclick="triggerEmailModal()" class="btn btn-outline-glass btn-sm text-xs py-2 flex items-center justify-center gap-1.5"><i class="fa-solid fa-envelope"></i> Email Letter</button>
+                                        </div>
+                                        <button onclick="copyShareableLink()" class="btn btn-outline-glass btn-sm text-xs py-2 w-full mt-2 flex items-center justify-center gap-1.5"><i class="fa-solid fa-share-nodes"></i> Share Public Link</button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Letter Preview Panel styled in dynamic templates -->
+                                <div class="col-lg-7">
+                                    
+                                    <!-- Template Quick Badge Selectors -->
+                                    <div class="mb-3">
+                                        <label class="text-[11px] text-gray-500 uppercase tracking-wider font-bold mb-2 block">Choose Layout Style (15 presets):</label>
+                                        <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-1.5 rounded bg-slate-900/50 border border-white/5" id="templatePresetBadges">
+                                            <!-- Dynamically generated badges via javascript -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Styled Letter Container -->
+                                    <div id="printableLetterPreview" class="letter-sheet template-modern mb-4">
+                                        <div class="header-block">
+                                            <h1 class="header-name" id="previewHeaderName">ALEX CARTER</h1>
+                                            <div class="header-contact" id="previewHeaderContact">San Francisco, CA | alex@example.com | (555) 019-2834</div>
+                                        </div>
+                                        <div class="letter-body mt-4 font-serif text-sm text-slate-800" id="previewBodyContent" style="white-space: pre-line">
+                                            Dear Hiring Committee,
+                                            
+                                            Cover letter text goes here...
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Real-time ATS Dashboard -->
+                                    <div class="glass-panel p-4 mt-6">
+                                        <h5 class="font-bold text-sm mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-gauge-high mr-2 text-indigo-400"></i> ATS Engine compliance Report</h5>
+                                        <div class="row align-items-center">
+                                            <div class="col-md-4 text-center">
+                                                <div class="score-circle mx-auto mb-2" id="atsScoreCircle">
+                                                    <span class="score-value" id="atsScoreVal">85</span>
+                                                </div>
+                                                <span class="text-xs text-gray-400 font-bold uppercase">ATS score Match</span>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="flex flex-col gap-3">
+                                                    <div class="flex justify-between items-center text-xs">
+                                                        <span>Readability Index:</span>
+                                                        <strong class="text-indigo-400" id="atsReadabilityVal">80 / 100</strong>
+                                                    </div>
+                                                    <div class="flex justify-between items-center text-xs">
+                                                        <span>Present Action Verbs:</span>
+                                                        <strong class="text-indigo-400" id="atsVerbsCount">4 verbs</strong>
+                                                    </div>
+                                                    <div class="flex justify-between items-center text-xs">
+                                                        <span>Grammar Alignment:</span>
+                                                        <strong class="text-emerald-400" id="atsGrammarVal">Excellent</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr class="border-gray-800 my-3">
+                                        <div class="row">
+                                            <div class="col-md-6 border-r border-gray-800 pr-3">
+                                                <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Matched Keywords</h6>
+                                                <div class="flex flex-wrap gap-1" id="atsKeywordsMatched"></div>
+                                            </div>
+                                            <div class="col-md-6 pl-3">
+                                                <h6 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Missing Terms</h6>
+                                                <div class="flex flex-wrap gap-1" id="atsMissingSkills"></div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 p-3 bg-indigo-500/5 rounded border border-indigo-500/10">
+                                            <h6 class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2">Improvement Tips</h6>
+                                            <ul class="text-xs text-gray-300 list-disc pl-4 d-grid gap-1" id="atsSuggestionsList"></ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Wizard Navigation Buttons -->
+                    <div class="flex justify-between mt-8 border-t border-gray-800 pt-4" id="wizardNavButtons">
+                        <button onclick="wizardPrev()" id="wizPrevBtn" class="btn btn-outline-glass px-4 py-2 font-bold text-sm" disabled>
+                            <i class="fa-solid fa-arrow-left mr-1"></i> Previous
+                        </button>
+                        <button onclick="wizardNext()" id="wizNextBtn" class="btn btn-primary-glow px-4 py-2 font-bold text-sm">
+                            Next <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VIEW 2: SAVED COVER LETTERS FOLDER -->
+            <section id="view-letters" class="dash-view hidden">
+                <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-extrabold">Saved Cover Letters</h2>
+                        <p class="text-sm text-gray-400">Search, filter, favorite, duplicate or delete your saved materials.</p>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <input type="text" id="lettersSearchInput" oninput="searchSavedLetters()" class="form-control form-glass-input text-xs py-2" placeholder="Search title or company...">
+                        <select id="lettersFilterSelect" onchange="filterSavedLetters()" class="form-control form-glass-input text-xs py-2 w-auto">
+                            <option value="all">All Letters</option>
+                            <option value="favorites">Favorites Only</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-4" id="lettersListGrid">
+                    <!-- Loaded dynamically via client JS -->
+                    <div class="text-center py-16 text-gray-400 w-full col-12">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p class="text-xs">Loading saved cover letters...</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VIEW 3: AI HISTORY & USAGE TIMELINE -->
+            <section id="view-history" class="dash-view hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-extrabold">Usage Logs &amp; History</h2>
+                    <p class="text-sm text-gray-400">View a list of operations performed on your credentials and files.</p>
+                </div>
+                
+                <div class="glass-panel p-6">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped table-hover mb-0 text-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="border-0">Action</th>
+                                    <th scope="col" class="border-0">Timestamp</th>
+                                    <th scope="col" class="border-0">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyLogsTableBody">
+                                <!-- Loaded dynamically via javascript -->
+                                <tr>
+                                    <td colspan="3" class="text-center text-gray-500 py-4">No logged activity logs.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- VIEW 4: PROFILE SETUP -->
+            <section id="view-profile" class="dash-view hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-extrabold">Profile Setup</h2>
+                    <p class="text-sm text-gray-400">Enter your core credentials to auto-populate wizard entries when generating letters.</p>
+                </div>
+                
+                <form onsubmit="saveUserProfile(event)" class="glass-panel p-6 flex flex-col gap-6">
+                    <h4 class="text-lg font-bold"><i class="fa-solid fa-address-book mr-2 text-indigoGlow"></i> Credentials Summary</h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Full Name</label>
+                            <input type="text" id="profFullname" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
+                            <input type="email" id="profEmail" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Phone Number</label>
+                            <input type="text" id="profPhone" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Location</label>
+                            <input type="text" id="profLocation" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">LinkedIn Profile URL</label>
+                            <input type="url" id="profLinkedin" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Portfolio/Website URL</label>
+                            <input type="url" id="profPortfolio" class="form-control form-glass-input text-sm">
+                        </div>
+                    </div>
+                    <hr class="border-gray-800">
+                    
+                    <h4 class="text-lg font-bold"><i class="fa-solid fa-user-gear mr-2 text-indigoGlow"></i> Professional History</h4>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Years of Experience</label>
+                            <input type="number" id="profExperience" class="form-control form-glass-input text-sm" min="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Current Position</label>
+                            <input type="text" id="profCurrentPos" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Previous Position</label>
+                            <input type="text" id="profPreviousPos" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Industry Sector</label>
+                            <input type="text" id="profIndustry" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Technical Skills (Comma separated)</label>
+                            <input type="text" id="profSkills" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Certifications (Comma separated)</label>
+                            <input type="text" id="profCerts" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Education / Credentials</label>
+                            <input type="text" id="profEducation" class="form-control form-glass-input text-sm">
+                        </div>
+                        <div class="col-12">
+                            <label class="text-xs font-semibold text-gray-400 uppercase mb-2">Key Career Achievements (One per line)</label>
+                            <textarea id="profAchievements" rows="4" class="form-control form-glass-input text-sm"></textarea>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary-glow py-3 font-bold mt-4">
+                        Save Profile Details
+                    </button>
+                </form>
+            </section>
+            
+            <!-- VIEW 5: SUBSCRIPTIONS & SANDBOX TOOLKIT -->
+            <section id="view-subscription" class="dash-view hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-extrabold">Billing &amp; Developer Sandbox</h2>
+                    <p class="text-sm text-gray-400">View pricing plans, subscription status and reset credentials for testing.</p>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="glass-panel p-6 h-100 flex flex-col justify-between">
+                            <div>
+                                <h4 class="text-lg font-bold mb-2">Current Tier: <span class="gradient-text font-black" id="subsStatusVal">Free Sandbox</span></h4>
+                                <p class="text-xs text-gray-400 mb-6">You are running the default sandbox environment.</p>
+                                <div class="p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/10 mb-6">
+                                    <h6 class="font-bold text-xs uppercase tracking-wider text-gray-300 mb-2">SaaS Credit Rules</h6>
+                                    <p class="text-xs text-gray-400 leading-relaxed">
+                                        Free accounts start with 5 generation credits. If you run out of credits, utilize the Developer Sandbox tool on the right to instantly refill them for testing routes.
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="upgradeTierSimulate()" class="btn btn-primary-glow py-3 font-bold">Upgrade to Premium Pro ($15)</button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="glass-panel p-6 h-100">
+                            <h4 class="text-lg font-bold mb-4 text-pink-500"><i class="fa-solid fa-bug mr-2"></i> Developer Sandbox Toolkit</h4>
+                            <p class="text-xs text-gray-400 mb-4">Trigger system behaviors, refill credits or upgrade packages without processing credit card operations.</p>
+                            
+                            <div class="d-grid gap-3">
+                                <button onclick="refillCreditsDev()" class="btn btn-outline-glass text-xs py-2.5 flex items-center justify-center gap-2"><i class="fa-solid fa-arrows-rotate text-emerald-400"></i> Refill Generation Credits to 5</button>
+                                <button onclick="resetAccountDev()" class="btn btn-outline-glass text-xs py-2.5 flex items-center justify-center gap-2"><i class="fa-solid fa-trash-can text-red-400"></i> Clear Workspace database logs</button>
+                                <div class="alert bg-slate-900 border border-gray-800 text-xs text-gray-400 p-3 mb-0">
+                                    <strong>Dev Notice:</strong> Free Tier limits cover letter exports to PDF and text copies. Upgrading to Premium Pro unlocks Microsoft Word (.docx) formats and deep ATS Keyword scans.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+        
+    </div>
+</div>
+
+<!-- EMAIL SENDING MODAL DIALOG -->
+<div class="modal fade" id="emailExportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel border border-white/10 text-white p-4">
+            <h5 class="font-bold text-lg mb-3">Email Cover Letter</h5>
+            <p class="text-xs text-gray-400 mb-4">Send the compiled cover letter text directly to a recipient inbox or recruiter.</p>
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Recipient Email Address</label>
+                <input type="email" id="exportRecipEmail" required class="form-control form-glass-input text-sm" placeholder="hiring@techcorp.com">
+            </div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" class="btn btn-outline-glass py-2 px-3 text-xs" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" onclick="sendCoverLetterEmailTrigger()" class="btn btn-primary-glow py-2 px-3 text-xs">Send Email</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add html2pdf library for PDF generation client side -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Client dashboard routines -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ats.js') }}"></script>
+<script src="{{ url_for('static', filename='js/export.js') }}"></script>
+{% endblock %}

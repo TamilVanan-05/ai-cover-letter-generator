@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - CoverCraft{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-card {
+        transition: var(--transition-smooth);
+    }
+    .admin-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-12 flex-grow">
+    
+    <!-- Header Admin info -->
+    <div class="mb-8 flex justify-between items-center" data-aos="fade-down">
+        <div>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-500/10 text-pink-400 text-xs font-semibold mb-2">
+                <i class="fa-solid fa-lock-open"></i> Administrative Dashboard
+            </span>
+            <h2 class="text-3xl font-extrabold text-white">System Insights &amp; Analytics</h2>
+            <p class="text-sm text-gray-400">Review SaaS conversion rates, user subscriptions, AI credit logs, and customer feedback tickets.</p>
+        </div>
+        <a href="/dashboard" class="btn btn-outline-glass px-4 py-2 text-xs font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-arrow-left mr-1.5"></i> Back to Workspace
+        </a>
+    </div>
+    
+    <!-- STATS OVERVIEW CARDS -->
+    <div class="row g-4 mb-8" data-aos="fade-up">
+        <!-- Users -->
+        <div class="col-md-3">
+            <div class="glass-panel p-6 admin-card">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-gray-400 uppercase">Total Clients</span>
+                    <i class="fa-solid fa-users text-indigo-400 text-lg"></i>
+                </div>
+                <h3 class="text-3xl font-black text-white mb-1" id="statTotalUsers">0</h3>
+                <span class="text-[10px] text-gray-400"><i class="fa-solid fa-arrow-trend-up text-emerald-500 mr-1"></i> Growing weekly</span>
+            </div>
+        </div>
+        <!-- Letters -->
+        <div class="col-md-3">
+            <div class="glass-panel p-6 admin-card">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-gray-400 uppercase">Letters Built</span>
+                    <i class="fa-solid fa-wand-magic-sparkles text-pink-400 text-lg"></i>
+                </div>
+                <h3 class="text-3xl font-black text-white mb-1" id="statTotalLetters">0</h3>
+                <span class="text-[10px] text-gray-400">Generated via AI engines</span>
+            </div>
+        </div>
+        <!-- Credits -->
+        <div class="col-md-3">
+            <div class="glass-panel p-6 admin-card">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-gray-400 uppercase">AI Credits Used</span>
+                    <i class="fa-solid fa-bolt text-yellow-400 text-lg"></i>
+                </div>
+                <h3 class="text-3xl font-black text-white mb-1" id="statCreditsUsed">0</h3>
+                <span class="text-[10px] text-gray-400">Total prompt tokens generated</span>
+            </div>
+        </div>
+        <!-- Feedback -->
+        <div class="col-md-3">
+            <div class="glass-panel p-6 admin-card">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-gray-400 uppercase">Bug Tickets / Feedback</span>
+                    <i class="fa-solid fa-comment-dots text-emerald-400 text-lg"></i>
+                </div>
+                <h3 class="text-3xl font-black text-white mb-1" id="statTotalFeedback">0</h3>
+                <span class="text-[10px] text-gray-400">Customer feedback forms logged</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CHARTS ROW -->
+    <div class="row g-4 mb-8" data-aos="fade-up" data-aos-delay="100">
+        <!-- Activity bar chart -->
+        <div class="col-lg-8">
+            <div class="glass-panel p-6 h-100">
+                <h5 class="font-bold text-sm mb-4">AI Generations Timeline (Past 7 Days)</h5>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="generationsTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Subscriptions pie chart -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-6 h-100">
+                <h5 class="font-bold text-sm mb-4">Subscription Plan Splits</h5>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="subscriptionSplitChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TABS TO TOGGLE LISTS -->
+    <div class="glass-panel p-6 mb-8" data-aos="fade-up" data-aos-delay="200">
+        <ul class="nav nav-tabs border-gray-800 mb-6 gap-3" id="adminDataTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active text-white border-0 bg-transparent border-bottom-2 border-indigo-500 pb-2 text-sm font-bold" id="users-tab" data-bs-toggle="tab" data-bs-target="#tab-users" type="button" role="tab">User Management</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-gray-400 hover:text-white border-0 bg-transparent border-bottom-2 border-transparent pb-2 text-sm font-bold" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#tab-feedback" type="button" role="tab">Customer Feedback</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-gray-400 hover:text-white border-0 bg-transparent border-bottom-2 border-transparent pb-2 text-sm font-bold" id="activity-tab" data-bs-toggle="tab" data-bs-target="#tab-activity" type="button" role="tab">SaaS Audit Timeline</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="adminDataTabsContent">
+            
+            <!-- TAB 1: USER MANAGEMENT -->
+            <div class="tab-pane fade show active" id="tab-users" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped table-hover align-middle mb-0 text-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="border-0">Username</th>
+                                <th scope="col" class="border-0">Email</th>
+                                <th scope="col" class="border-0">Status Tier</th>
+                                <th scope="col" class="border-0">Credits Left</th>
+                                <th scope="col" class="border-0">Joined Date</th>
+                                <th scope="col" class="border-0 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTableBody">
+                            <!-- Populated dynamically via JS -->
+                            <tr>
+                                <td colspan="6" class="text-center text-gray-500 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying user logs...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- TAB 2: CUSTOMER FEEDBACK -->
+            <div class="tab-pane fade" id="tab-feedback" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped table-hover align-middle mb-0 text-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="border-0">Name</th>
+                                <th scope="col" class="border-0">Email Address</th>
+                                <th scope="col" class="border-0">Message</th>
+                                <th scope="col" class="border-0">Logged Date</th>
+                                <th scope="col" class="border-0 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminFeedbackTableBody">
+                            <!-- Populated dynamically via JS -->
+                            <tr>
+                                <td colspan="5" class="text-center text-gray-500 py-4">No feedback tickets logged.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- TAB 3: SAAS AUDIT TIMELINE -->
+            <div class="tab-pane fade" id="tab-activity" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-dark table-striped table-hover align-middle mb-0 text-sm">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="border-0">User ID</th>
+                                <th scope="col" class="border-0">Trigger Action</th>
+                                <th scope="col" class="border-0">Logged Date</th>
+                                <th scope="col" class="border-0">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminActivityTableBody">
+                            <!-- Populated dynamically via JS -->
+                            <tr>
+                                <td colspan="4" class="text-center text-gray-500 py-4">No activities logged.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js for Admin Analytics charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script>
+    // Toggle active link styles in bootstrap tabs
+    document.addEventListener("DOMContentLoaded", () => {
+        const triggerTabList = document.querySelectorAll('#adminDataTabs button');
+        triggerTabList.forEach(triggerEl => {
+            triggerEl.addEventListener('click', event => {
+                event.preventDefault();
+                // Clear active styles from all tab links
+                triggerTabList.forEach(t => {
+                    t.className = "nav-link text-gray-400 hover:text-white border-0 bg-transparent border-bottom-2 border-transparent pb-2 text-sm font-bold";
+                });
+                // Add active styles to clicked tab
+                triggerEl.className = "nav-link active text-indigoGlow border-0 bg-transparent border-bottom-2 border-indigo-500 pb-2 text-sm font-bold";
+            });
+        });
+    });
+</script>
+{% endblock %}

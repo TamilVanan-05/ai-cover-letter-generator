@@ -1,0 +1,286 @@
+/* --- Cover Letter Sheets Container Styles (A4 Page Simulation) --- */
+.letter-sheet {
+    background: #ffffff;
+    color: #1e293b;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    min-height: 800px;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    position: relative;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+/* Base resets inside the letter sheet */
+.letter-sheet h1, .letter-sheet h2, .letter-sheet h3 {
+    margin: 0;
+    color: inherit;
+    font-family: inherit;
+    font-weight: bold;
+}
+
+.letter-sheet p {
+    margin-top: 0;
+    margin-bottom: 14px;
+    color: inherit;
+    text-align: justify;
+}
+
+.letter-sheet .header-contact {
+    margin-bottom: 30px;
+    font-size: 9pt;
+    color: #64748b;
+}
+
+/* --- 1. MODERN --- */
+.template-modern {
+    font-family: 'Inter', sans-serif;
+    border-left: 6px solid #4f46e5; /* Indigo accent border */
+}
+.template-modern .header-name {
+    font-size: 22pt;
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+.template-modern .header-contact {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 15px;
+}
+
+/* --- 2. PROFESSIONAL --- */
+.template-professional {
+    font-family: 'Inter', sans-serif;
+}
+.template-professional .header-block {
+    text-align: center;
+    border-bottom: 2px solid #0f172a;
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+}
+.template-professional .header-name {
+    font-size: 24pt;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+/* --- 3. EXECUTIVE --- */
+.template-executive {
+    font-family: 'Outfit', 'Georgia', serif;
+    background: #fafaf9;
+    color: #292524;
+}
+.template-executive .header-block {
+    border-bottom: 3px double #78350f; /* Amber/gold colors */
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+}
+.template-executive .header-name {
+    font-size: 22pt;
+    color: #78350f;
+    letter-spacing: 1px;
+}
+
+/* --- 4. CORPORATE --- */
+.template-corporate {
+    font-family: 'Inter', sans-serif;
+}
+.template-corporate .header-block {
+    background: #1e3a8a; /* Corporate navy */
+    color: #ffffff;
+    margin: -40px -40px 30px -40px;
+    padding: 30px 40px;
+}
+.template-corporate .header-name {
+    font-size: 20pt;
+    color: #ffffff;
+}
+.template-corporate .header-contact {
+    color: #93c5fd;
+}
+
+/* --- 5. MINIMAL --- */
+.template-minimal {
+    font-family: 'Inter', sans-serif;
+    padding: 50px;
+    font-size: 10pt;
+}
+.template-minimal .header-block {
+    margin-bottom: 40px;
+}
+.template-minimal .header-name {
+    font-size: 16pt;
+    font-weight: 500;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 8px;
+}
+
+/* --- 6. GOOGLE --- */
+.template-google {
+    font-family: 'Inter', sans-serif;
+}
+.template-google::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(to right, #4285f4 25%, #ea4335 25%, #ea4335 50%, #fbbc05 50%, #fbbc05 75%, #34a853 75%);
+}
+.template-google .header-name {
+    font-size: 22pt;
+    color: #202124;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+/* --- 7. AMAZON --- */
+.template-amazon {
+    font-family: 'Inter', sans-serif;
+}
+.template-amazon .header-block {
+    border-bottom: 2px solid #ff9900; /* Amazon orange */
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+}
+.template-amazon .header-name {
+    font-size: 20pt;
+    color: #232f3e; /* Amazon dark blue */
+}
+
+/* --- 8. MICROSOFT --- */
+.template-microsoft {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.template-microsoft .header-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #d2d2d2;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+}
+.template-microsoft .header-name {
+    font-size: 20pt;
+    color: #0078d4; /* Microsoft blue */
+}
+
+/* --- 9. BLUE --- */
+.template-blue {
+    font-family: 'Inter', sans-serif;
+    color: #1e3a8a;
+}
+.template-blue .header-name {
+    font-size: 24pt;
+    color: #2563eb;
+    font-weight: 700;
+}
+.template-blue .header-contact {
+    color: #3b82f6;
+}
+
+/* --- 10. DARK --- */
+.template-dark {
+    background: #0f172a;
+    color: #f8fafc;
+}
+.template-dark .header-name {
+    font-size: 22pt;
+    color: #38bdf8; /* Sky blue neon */
+}
+.template-dark .header-contact {
+    color: #94a3b8;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 15px;
+}
+
+/* --- 11. ELEGANT --- */
+.template-elegant {
+    font-family: 'Georgia', serif;
+    padding: 50px;
+    background: #fdfdfb;
+}
+.template-elegant .header-block {
+    text-align: center;
+    margin-bottom: 40px;
+}
+.template-elegant .header-name {
+    font-size: 26pt;
+    font-weight: 400;
+    color: #1c1917;
+    font-style: italic;
+}
+
+/* --- 12. CREATIVE --- */
+.template-creative {
+    font-family: 'Inter', sans-serif;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 30px;
+}
+.template-creative .sidebar {
+    border-right: 1px solid #e2e8f0;
+    padding-right: 20px;
+    font-size: 8.5pt;
+    color: #475569;
+}
+.template-creative .header-name {
+    font-size: 18pt;
+    color: #ec4899; /* Vibrant Pink */
+    margin-bottom: 15px;
+}
+
+/* --- 13. GRADUATE --- */
+.template-graduate {
+    font-family: 'Inter', sans-serif;
+}
+.template-graduate .header-block {
+    border-bottom: 2px solid #10b981; /* Emerald */
+    padding-bottom: 10px;
+}
+.template-graduate .header-name {
+    font-size: 20pt;
+    color: #065f46;
+}
+
+/* --- 14. SOFTWARE ENGINEER --- */
+.template-software-engineer {
+    font-family: 'Fira Code', monospace;
+    font-size: 10pt;
+}
+.template-software-engineer .header-name::before {
+    content: 'const candidate = ';
+    color: #7c3aed;
+}
+.template-software-engineer .header-name {
+    font-size: 15pt;
+    color: #0f172a;
+    font-weight: bold;
+}
+.template-software-engineer .header-contact {
+    color: #6d28d9;
+    border-bottom: 1px dashed #c084fc;
+    padding-bottom: 10px;
+}
+
+/* --- 15. AI ENGINEER --- */
+.template-ai-engineer {
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at top right, #f8fafc, #f1f5f9);
+}
+.template-ai-engineer .header-block {
+    border-bottom: 1px solid #a78bfa;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+.template-ai-engineer .header-name {
+    font-size: 22pt;
+    background: linear-gradient(to right, #4f46e5, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}

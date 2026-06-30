@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ letter.title }} - Shared via CoverCraft</title>
+    
+    <!-- UI Framework & Styling CDNs -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/templates.css') }}">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            padding-top: 40px;
+            padding-bottom: 60px;
+        }
+        .share-card-container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        .header-top-bar {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container share-card-container">
+    
+    <!-- Top Action bar for recruiter -->
+    <header class="header-top-bar">
+        <div class="d-flex align-items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+            </div>
+            <span class="font-extrabold text-sm tracking-tight text-white">CoverCraft Shared Letter</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="window.print()" class="btn btn-outline-light btn-sm text-xs py-2 px-3 flex items-center gap-1.5"><i class="fa-solid fa-print"></i> Print Document</button>
+            <a href="/" class="btn btn-primary btn-sm text-xs py-2 px-3 bg-indigo-600 border-0 flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> Create Yours Free</a>
+        </div>
+    </header>
+
+    <!-- RENDERED COVER LETTER (A4 Sheet layout wrapper) -->
+    <div id="printableContent" class="letter-sheet template-{{ letter.template_name }}">
+        
+        <!-- Google Template Top Accent line -->
+        {% if letter.template_name == 'google' %}
+        <div style="content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(to right, #4285f4 25%, #ea4335 25%, #ea4335 50%, #fbbc05 50%, #fbbc05 75%, #34a853 75%);"></div>
+        {% endif %}
+        
+        <!-- Software Engineer tag decoration -->
+        {% if letter.template_name == 'software-engineer' %}
+        <div class="header-block">
+            <h1 class="header-name"><span style="color:#7c3aed">const</span> candidate = "{{ profile.full_name or 'Applicant' }}";</h1>
+            <div class="header-contact">{{ profile.location or '' }} | {{ profile.email or '' }} | {{ profile.phone or '' }}</div>
+        </div>
+        {% elif letter.template_name == 'creative' %}
+        <div class="sidebar">
+            <div class="font-bold text-xs uppercase text-slate-800 tracking-wider mb-2">Applicant</div>
+            <div>{{ profile.full_name or 'Applicant Name' }}</div>
+            <div class="mt-3 font-bold text-xs uppercase text-slate-800 tracking-wider mb-2">Contact</div>
+            <div>{{ profile.location or '' }}</div>
+            <div>{{ profile.email or '' }}</div>
+            <div>{{ profile.phone or '' }}</div>
+            {% if profile.linkedin %}
+            <div class="mt-2 text-pink-500 font-bold">LinkedIn</div>
+            {% endif %}
+        </div>
+        <div>
+            <h1 class="header-name" style="color: #ec4899;">{{ profile.full_name or 'Applicant Name' }}</h1>
+        {% else %}
+        <div class="header-block">
+            <h1 class="header-name">{{ profile.full_name or 'Applicant Name' }}</h1>
+            <div class="header-contact">
+                {% set contact_items = [] %}
+                {% if profile.location %}{% set _ = contact_items.append(profile.location) %}{% endif %}
+                {% if profile.phone %}{% set _ = contact_items.append(profile.phone) %}{% endif %}
+                {% if profile.email %}{% set _ = contact_items.append(profile.email) %}{% endif %}
+                {% if profile.linkedin %}{% set _ = contact_items.append('LinkedIn') %}{% endif %}
+                {{ contact_items | join('  |  ') }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="letter-body mt-4 font-serif text-sm text-slate-800" style="white-space: pre-line">
+            {{ letter.content }}
+        </div>
+        
+        {% if letter.template_name == 'creative' %}
+        </div> <!-- End Creative outer grid -->
+        {% endif %}
+    </div>
+    
+    <footer class="text-center text-xs text-gray-500 mt-6">
+        Powering recruiter connections with CoverCraft AI engine.
+    </footer>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

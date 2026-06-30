@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Cover Letter Generator{% endblock %} - Tailored to Perfection</title>
+    
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="Build highly personalized, ATS-friendly, recruiter-approved cover letters in seconds using advanced AI. Enhance your resume, increase keyword match, and landing interviews.">
+    <meta name="keywords" content="AI Cover Letter Generator, Cover Letter Builder, ATS Optimizer, Resume Builder, Job Search, Interview Coaching, Premium SaaS">
+    <meta name="author" content="Antigravity Team">
+    
+    <!-- UI Frameworks & Styling CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        indigoGlow: '#6366f1',
+                        roseGlow: '#ec4899',
+                        darkSlate: '#0b0f19',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Third Party Assets (FontAwesome, Animations) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Custom Style Layouts -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Global Glowing Accents -->
+    <div class="bg-glow-purple top-10 left-10"></div>
+    <div class="bg-glow-indigo top-64 right-10"></div>
+
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark glass-nav sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand flex items-center gap-2" href="/">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                </div>
+                <span class="font-extrabold text-xl tracking-tight text-white font-sans">
+                    Cover<span class="gradient-text">Craft</span>
+                </span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-4 gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link text-gray-300 hover:text-white" href="/#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-gray-300 hover:text-white" href="/#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-gray-300 hover:text-white" href="/#templates">Templates</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-gray-300 hover:text-white" href="/#pricing">Pricing</a>
+                    </li>
+                </ul>
+                
+                <!-- Dynamic Navigation state based on authentication -->
+                <div class="d-flex align-items-center gap-3" id="navAuthSection">
+                    <!-- Loaded via client JS to verify JWT token -->
+                    <a href="/login" class="btn btn-outline-glass px-4 py-2 text-sm font-medium">Log In</a>
+                    <a href="/login?signup=true" class="btn btn-primary-glow px-4 py-2 text-sm font-medium">Get Started Free</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dynamic Content Block -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Toast Alert Center -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3 z-50">
+        <div id="globalToast" class="toast glass-panel border-0 text-white" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+            <div class="toast-header bg-transparent border-bottom border-gray-700 text-white flex justify-between">
+                <strong class="me-auto flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-indigoGlow" id="toastIcon"></i>
+                    <span id="toastTitle">Notification</span>
+                </strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Notification message goes here.
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Area -->
+    <footer class="glass-nav border-t border-gray-800 py-12 mt-20">
+        <div class="container">
+            <div class="row g-4 justify-content-between">
+                <div class="col-lg-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                            <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                        </div>
+                        <span class="font-extrabold text-lg tracking-tight text-white">
+                            Cover<span class="gradient-text">Craft</span>
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-400 max-w-sm mb-4">
+                        Create hiring-optimized, ATS-tailored cover letters designed specifically for recruiters in seconds. Landing interviews has never been this simple.
+                    </p>
+                    <div class="flex gap-3 text-gray-400">
+                        <a href="#" class="hover:text-white transition"><i class="fa-brands fa-twitter text-lg"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fa-brands fa-linkedin text-lg"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fa-brands fa-github text-lg"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fa-brands fa-discord text-lg"></i></a>
+                    </div>
+                </div>
+                
+                <div class="col-6 col-md-3 col-lg-2">
+                    <h6 class="text-white font-bold text-sm uppercase tracking-wider mb-3">Product</h6>
+                    <ul class="list-unstyled d-grid gap-2 text-sm text-gray-400">
+                        <li><a href="/#features" class="hover:text-white transition">AI Features</a></li>
+                        <li><a href="/#templates" class="hover:text-white transition">15+ Templates</a></li>
+                        <li><a href="/#pricing" class="hover:text-white transition">Pricing Plans</a></li>
+                        <li><a href="/#faq" class="hover:text-white transition">FAQs</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-6 col-md-3 col-lg-2">
+                    <h6 class="text-white font-bold text-sm uppercase tracking-wider mb-3">Resources</h6>
+                    <ul class="list-unstyled d-grid gap-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">ATS Tips</a></li>
+                        <li><a href="#" class="hover:text-white transition">Cover Letter Guide</a></li>
+                        <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-3">
+                    <h6 class="text-white font-bold text-sm uppercase tracking-wider mb-3">Send Us Feedback</h6>
+                    <div class="flex flex-col gap-2">
+                        <input type="text" id="footerFeedbackName" placeholder="Your Name" class="form-control form-glass-input text-sm py-2 px-3">
+                        <input type="email" id="footerFeedbackEmail" placeholder="Your Email" class="form-control form-glass-input text-sm py-2 px-3">
+                        <textarea id="footerFeedbackMsg" rows="2" placeholder="Message" class="form-control form-glass-input text-sm py-2 px-3"></textarea>
+                        <button onclick="submitFooterFeedback()" class="btn btn-primary-glow py-2 text-xs font-bold uppercase tracking-wider">Send Feedback</button>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="border-gray-800 my-8">
+            
+            <div class="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 gap-3">
+                <span>&copy; 2026 CoverCraft SaaS Inc. All rights reserved.</span>
+                <div class="flex gap-4">
+                    <a href="#" class="hover:text-white transition">Privacy Policy</a>
+                    <a href="#" class="hover:text-white transition">Terms & Conditions</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap & JS Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    
+    <!-- Client Helpers -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        // Init AOS Animations
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

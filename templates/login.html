@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Authenticate - CoverCraft{% endblock %}
+
+{% block content %}
+<div class="container flex-grow flex items-center justify-center py-16">
+    <!-- Centered Glass Card -->
+    <div class="w-full max-w-md glass-panel p-8 relative overflow-hidden" data-aos="zoom-in">
+        
+        <!-- Tab Headers -->
+        <div class="flex border-b border-gray-800 pb-3 mb-6 justify-center gap-6" id="authTabs">
+            <button onclick="switchAuthTab('login')" id="loginTabBtn" class="text-lg font-bold border-b-2 border-indigo-500 pb-2 text-white transition">Sign In</button>
+            <button onclick="switchAuthTab('signup')" id="signupTabBtn" class="text-lg font-bold border-b-2 border-transparent pb-2 text-gray-400 hover:text-white transition">Register</button>
+        </div>
+        
+        <!-- 1. SIGN IN FORM -->
+        <div id="loginFormSection" class="auth-section">
+            <h3 class="text-xl font-bold mb-1">Welcome Back</h3>
+            <p class="text-xs text-gray-400 mb-6">Log in to manage your saved cover letters.</p>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
+                    <input type="email" id="loginEmail" required class="form-control form-glass-input text-sm" placeholder="alex@example.com">
+                </div>
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-gray-400 uppercase">Password</label>
+                        <button type="button" onclick="switchAuthTab('forgot')" class="text-xs text-indigo-400 hover:underline">Forgot password?</button>
+                    </div>
+                    <input type="password" id="loginPassword" required class="form-control form-glass-input text-sm" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary-glow w-full py-3 mt-2 font-bold flex items-center justify-center gap-2">
+                    Sign In <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center text-xs text-gray-500">
+                Sandbox admin: <code class="text-indigo-300">admin@aicoveradmin.com</code> / <code class="text-indigo-300">admin123</code>
+            </div>
+        </div>
+
+        <!-- 2. REGISTER FORM -->
+        <div id="signupFormSection" class="auth-section hidden">
+            <h3 class="text-xl font-bold mb-1">Create Account</h3>
+            <p class="text-xs text-gray-400 mb-6">Start building customized recruiter-friendly applications.</p>
+            
+            <form onsubmit="handleSignup(event)">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Full Name</label>
+                    <input type="text" id="signupUsername" required class="form-control form-glass-input text-sm" placeholder="Alex Carter">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
+                    <input type="email" id="signupEmail" required class="form-control form-glass-input text-sm" placeholder="alex@example.com">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Password</label>
+                    <input type="password" id="signupPassword" required class="form-control form-glass-input text-sm" placeholder="At least 6 characters">
+                </div>
+                <div class="mb-4 flex items-center">
+                    <input type="checkbox" id="termsCheck" required class="rounded bg-slate-900 border-gray-700 mr-2 text-indigo-500">
+                    <label for="termsCheck" class="text-xs text-gray-400">I agree to the Terms of Service &amp; Privacy Policy</label>
+                </div>
+                <button type="submit" class="btn btn-primary-glow w-full py-3 font-bold flex items-center justify-center gap-2">
+                    Create Account <i class="fa-solid fa-user-plus text-xs"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. FORGOT PASSWORD -->
+        <div id="forgotFormSection" class="auth-section hidden">
+            <h3 class="text-xl font-bold mb-1">Reset Password</h3>
+            <p class="text-xs text-gray-400 mb-6">Enter your registered email to simulate a reset verification token.</p>
+            
+            <form onsubmit="handleForgotPassword(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Email Address</label>
+                    <input type="email" id="forgotEmail" required class="form-control form-glass-input text-sm" placeholder="alex@example.com">
+                </div>
+                <button type="submit" class="btn btn-secondary-glow w-full py-3 font-bold">
+                    Send Reset Token
+                </button>
+                <button type="button" onclick="switchAuthTab('login')" class="btn btn-link text-xs text-gray-400 w-full mt-4 hover:text-white">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Back to login
+                </button>
+            </form>
+        </div>
+        
+        <!-- 4. RESET CODE VERIFICATION -->
+        <div id="verifyResetSection" class="auth-section hidden">
+            <h3 class="text-xl font-bold mb-1">Verify Code</h3>
+            <p class="text-xs text-gray-400 mb-6">A sandbox verification token has been simulated. Check console or use <code class="text-indigo-400">123456</code>.</p>
+            
+            <form onsubmit="handleVerifyReset(event)">
+                <div class="mb-3">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">Verification Code</label>
+                    <input type="text" id="resetCode" required class="form-control form-glass-input text-sm text-center tracking-widest font-mono" placeholder="••••••">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-2">New Password</label>
+                    <input type="password" id="resetNewPassword" required class="form-control form-glass-input text-sm" placeholder="At least 6 characters">
+                </div>
+                <button type="submit" class="btn btn-primary-glow w-full py-3 font-bold">
+                    Verify &amp; Reset Password
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle switching sections in login page
+    function switchAuthTab(target) {
+        // Hide all
+        document.querySelectorAll('.auth-section').forEach(s => s.classList.add('hidden'));
+        
+        // Remove active class from buttons
+        document.getElementById('loginTabBtn').className = "text-lg font-bold border-b-2 border-transparent pb-2 text-gray-400 hover:text-white transition";
+        document.getElementById('signupTabBtn').className = "text-lg font-bold border-b-2 border-transparent pb-2 text-gray-400 hover:text-white transition";
+        
+        if (target === 'login') {
+            document.getElementById('loginFormSection').classList.remove('hidden');
+            document.getElementById('loginTabBtn').className = "text-lg font-bold border-b-2 border-indigo-500 pb-2 text-white transition";
+            document.getElementById('authTabs').classList.remove('hidden');
+        } else if (target === 'signup') {
+            document.getElementById('signupFormSection').classList.remove('hidden');
+            document.getElementById('signupTabBtn').className = "text-lg font-bold border-b-2 border-indigo-500 pb-2 text-white transition";
+            document.getElementById('authTabs').classList.remove('hidden');
+        } else if (target === 'forgot') {
+            document.getElementById('forgotFormSection').classList.remove('hidden');
+            document.getElementById('authTabs').classList.add('hidden');
+        } else if (target === 'verify') {
+            document.getElementById('verifyResetSection').classList.remove('hidden');
+            document.getElementById('authTabs').classList.add('hidden');
+        }
+    }
+    
+    // Check if redirect query exists (e.g. login?signup=true)
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('signup') === 'true') {
+            switchAuthTab('signup');
+        }
+    });
+</script>
+{% endblock %}
